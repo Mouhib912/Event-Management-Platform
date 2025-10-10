@@ -120,6 +120,8 @@ Your application consists of:
    Start Command: npm run preview -- --host 0.0.0.0 --port $PORT
    ```
 
+   **Note**: The `vite.config.js` already includes `allowedHosts: 'all'` to allow Render domains.
+
 3. **Set Environment Variables**
    | Key | Value |
    |-----|-------|
@@ -315,6 +317,23 @@ Instead of manual setup, you can use Infrastructure as Code:
 - Free tier services sleep after 15 min of inactivity
 - First request wakes them up (takes 30-60 seconds)
 - Upgrade to paid plan to keep services always running
+
+### Issue: "This host is not allowed" error
+
+**Error Message**: 
+```
+Blocked request. This host ("your-app.onrender.com") is not allowed.
+To allow this host, add "your-app.onrender.com" to `preview.allowedHosts` in vite.config.js.
+```
+
+**Solution**:
+
+- This is already fixed in `vite.config.js` with `allowedHosts: 'all'`
+- If you still see this error:
+  1. Make sure you've pushed the latest code with the updated `vite.config.js`
+  2. Trigger a manual redeploy on Render
+  3. Clear your browser cache and try again
+- The configuration allows all hosts, which is necessary for Render's dynamic URLs
 
 ---
 

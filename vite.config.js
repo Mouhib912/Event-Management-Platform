@@ -30,6 +30,7 @@ export default defineConfig(({ mode }) => {
     preview: {
       port: parseInt(env.PORT) || 4173,
       host: '0.0.0.0',
+      allowedHosts: 'all', // Allow all hosts for Render deployment
     },
     build: {
       outDir: 'dist',
