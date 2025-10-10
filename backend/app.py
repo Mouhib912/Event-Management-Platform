@@ -16,18 +16,23 @@ import base64
 
 app = Flask(__name__)
 
-# Configuration
-app.config['SECRET_KEY'] = 'your-secret-key-change-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///event_management.db'
+# Configuration - use environment variables for production
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-change-in-production')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///event_management.db')
+# Handle PostgreSQL URL from Render
+if app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgres://'):
+    app.config['SQLALCHEMY_DATABASE_URI'] = app.config['SQLALCHEMY_DATABASE_URI'].replace('postgres://', 'postgresql://', 1)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'jwt-secret-string-change-in-production'
+app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-string-change-in-production')
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
 app.config['JWT_IDENTITY_CLAIM'] = 'sub'  # Allow integer identities
 
 # Initialize extensions
 db = SQLAlchemy(app)
 jwt = JWTManager(app)
-CORS(app)
+# CORS configuration for production
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
+CORS(app, resources={r"/*": {"origins": [FRONTEND_URL, "http://localhost:5173"]}})
 
 # Models
 class User(db.Model):
@@ -142,6 +147,25 @@ class Invoice(db.Model):
     
     stand = db.relationship('Stand', backref='invoices')
     creator = db.relationship('User', backref='created_invoices')
+
+# Health Check Route for Render
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Health check endpoint for Render deployment"""
+    try:
+        # Check database connection
+        db.session.execute('SELECT 1')
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'timestamp': datetime.utcnow().isoformat()
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': datetime.utcnow().isoformat()
+        }), 500
 
 # Authentication Routes
 @app.route('/api/auth/login', methods=['POST'])

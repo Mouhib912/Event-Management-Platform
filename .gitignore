@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+backend/instance/
+*.db
+*.sqlite3
+
+# Node
+node_modules/
+dist/
+build/
+.pnpm-store/
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.production
+backend/.env
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Render
+.render/
