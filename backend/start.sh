@@ -15,8 +15,17 @@ if [ -n "$RENDER" ]; then
     echo ""
 fi
 
+# Reset database to fix schema mismatches (e.g., column size changes)
+echo "🗑️  Resetting database schema..."
+python reset_render_db.py
+
+if [ $? -ne 0 ]; then
+    echo "❌ Database reset failed! Continuing anyway..."
+fi
+
 # Initialize database with sample data
-echo "🗄️  Checking database initialization..."
+echo ""
+echo "🗄️  Initializing database with sample data..."
 python auto_init.py
 
 # Check if initialization was successful
@@ -26,7 +35,7 @@ if [ $? -eq 0 ]; then
     echo ""
 else
     echo ""
-    echo "⚠️  Database initialization had issues (may already be initialized)"
+    echo "⚠️  Database initialization had issues"
     echo ""
 fi
 

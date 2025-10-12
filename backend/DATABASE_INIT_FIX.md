@@ -18,30 +18,32 @@ Your backend is running, BUT the database tables haven't been created yet. When 
 ### **Method 1: Using Render Shell (Recommended)**
 
 1. **Open Render Dashboard**
+
    - Go to: https://dashboard.render.com
    - Click on: `event-management-backend-7evi` (your backend service)
 
 2. **Open Shell**
+
    - Click the **"Shell"** tab at the top
    - Wait 30 seconds for shell to connect
    - You'll see a command prompt: `$`
 
 3. **Run Initialization Commands**
-   
+
    Copy and paste this ENTIRE block, then press Enter:
-   
+
    ```python
    python << 'EOF'
    from app import app, db, User
    from werkzeug.security import generate_password_hash
-   
+
    print("Initializing database...")
-   
+
    with app.app_context():
        # Create all tables
        db.create_all()
        print("✅ Tables created!")
-       
+
        # Create admin user
        try:
            admin = User(
@@ -59,22 +61,23 @@ Your backend is running, BUT the database tables haven't been created yet. When 
        except Exception as e:
            print(f"Note: {e}")
            print("Admin may already exist")
-   
+
    print("\n✅ Database ready!")
    EOF
    ```
 
 4. **Wait for Success Message**
-   
+
    You should see:
+
    ```
    ✅ Tables created!
    ✅ Admin user created!
-   
+
    Login with:
    Email: admin@example.com
    Password: changeme123
-   
+
    ✅ Database ready!
    ```
 
@@ -115,6 +118,7 @@ exit()
 If the shell is not working:
 
 1. In Render Shell, run:
+
    ```bash
    cd backend
    python init_db.py
@@ -127,9 +131,11 @@ If the shell is not working:
 ## 🧪 **Verify It Worked**
 
 ### Test 1: Check Backend Health
+
 Visit: https://event-management-backend-7evi.onrender.com/api/health
 
 Should return:
+
 ```json
 {
   "status": "healthy",
@@ -139,14 +145,17 @@ Should return:
 ```
 
 ### Test 2: Check Backend Logs
+
 In Render Dashboard → Backend Service → Logs
 
 Should NOT see errors like:
+
 - ❌ `no such table: user`
 - ❌ `relation "user" does not exist`
 - ❌ `OperationalError`
 
 Should see:
+
 - ✅ `200 GET /api/health`
 - ✅ Server running on port...
 
@@ -172,15 +181,19 @@ Should see:
 3. Common issues:
 
 #### Error: "relation 'user' does not exist"
+
 - **Fix**: Database tables not created. Re-run initialization script above
 
 #### Error: "connection to server failed"
+
 - **Fix**: Check `DATABASE_URL` environment variable is set correctly
 
 #### Error: "column X does not exist"
+
 - **Fix**: Database schema is outdated. Delete database and recreate it
 
 #### Error: "UNIQUE constraint failed"
+
 - **Fix**: Admin user already exists. This is OK, just use the existing credentials
 
 ---
@@ -202,6 +215,7 @@ Should see:
 ## 💡 **Why This Happens**
 
 When you first deploy to Render:
+
 1. ✅ Database is created (empty)
 2. ✅ Backend deploys and connects to database
 3. ❌ **BUT tables are not created automatically**

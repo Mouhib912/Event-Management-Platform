@@ -13,19 +13,22 @@ No need to manually run scripts in the shell. Just deploy and everything works! 
 When you deploy/redeploy the backend, the system automatically creates:
 
 ### 👥 **3 User Accounts**
-| Role      | Email                 | Password      |
-|-----------|-----------------------|---------------|
-| Admin     | admin@event.com       | admin123      |
-| Logistics | logistics@event.com   | logistics123  |
-| Finance   | finance@event.com     | finance123    |
+
+| Role      | Email               | Password     |
+| --------- | ------------------- | ------------ |
+| Admin     | admin@event.com     | admin123     |
+| Logistics | logistics@event.com | logistics123 |
+| Finance   | finance@event.com   | finance123   |
 
 ### 🏢 **4 Suppliers**
+
 - EventPro Solutions (Tunis)
 - TechStand Equipment (Tunis)
 - Display & Design Co (Tunis)
 - Furniture Plus (Tunis)
 
 ### 📂 **5 Categories**
+
 - Mobilier (Tables, chaises, présentoirs)
 - Électronique (Écrans, projecteurs, audio)
 - Éclairage (Spots, LED, décoratif)
@@ -33,6 +36,7 @@ When you deploy/redeploy the backend, the system automatically creates:
 - Structure (Stands modulaires, cloisons)
 
 ### 📦 **17 Products**
+
 - 4 Furniture items
 - 4 Electronics
 - 3 Lighting equipment
@@ -40,6 +44,7 @@ When you deploy/redeploy the backend, the system automatically creates:
 - 3 Structure elements
 
 ### 🏛️ **2 Sample Stands**
+
 - "Stand Tech Innovators" (Pending)
 - "Stand Fashion Week" (Approved)
 
@@ -161,9 +166,11 @@ Go to **Logs** tab and you'll see:
 ## ✅ Verify It Worked
 
 ### **Test 1: Backend Health Check**
+
 Visit: https://event-management-backend-7evi.onrender.com/api/health
 
 Should return:
+
 ```json
 {
   "status": "healthy",
@@ -173,6 +180,7 @@ Should return:
 ```
 
 ### **Test 2: Login to Frontend**
+
 1. Visit: https://event-management-frontend-7awm.onrender.com
 2. Login with:
    - Email: `admin@event.com`
@@ -180,7 +188,9 @@ Should return:
 3. You're in! 🎉
 
 ### **Test 3: Check Sample Data**
+
 After logging in:
+
 - Go to **Suppliers** → See 4 suppliers
 - Go to **Categories** → See 5 categories
 - Go to **Products** → See 17 products
@@ -191,12 +201,14 @@ After logging in:
 ## 🔄 What Happens on Subsequent Deploys?
 
 The script is **smart**:
+
 - ✅ First deployment: Creates all tables and sample data
 - ✅ Subsequent deploys: Detects existing data and skips creation
 - ✅ No duplicate data
 - ✅ Preserves your production data
 
 You'll see:
+
 ```
 ⚠️ Database already initialized. Skipping sample data creation.
    Found 3 existing users.
@@ -214,6 +226,7 @@ python auto_init.py
 ```
 
 Then start your Flask server:
+
 ```bash
 python app.py
 ```
@@ -225,6 +238,7 @@ python app.py
 To modify the sample data, edit `backend/auto_init.py`:
 
 ### Add More Suppliers:
+
 ```python
 suppliers_data = [
     # ... existing suppliers ...
@@ -239,6 +253,7 @@ suppliers_data = [
 ```
 
 ### Add More Products:
+
 ```python
 products_data = [
     # ... existing products ...
@@ -261,6 +276,7 @@ Then commit and push to trigger a redeploy.
 ### Issue: "Database already initialized" but no data visible
 
 **Solution:**
+
 - Database has users but may be from a failed initialization
 - Delete the database on Render and create a new one
 - Redeploy backend
@@ -268,6 +284,7 @@ Then commit and push to trigger a redeploy.
 ### Issue: Script fails with errors
 
 **Solution:**
+
 - Check Render logs for specific error message
 - Ensure `DATABASE_URL` environment variable is set
 - Verify database is running and accessible
@@ -275,6 +292,7 @@ Then commit and push to trigger a redeploy.
 ### Issue: Start command not found
 
 **Solution:**
+
 - Ensure `start.sh` has execute permissions
 - Build command includes: `chmod +x start.sh`
 - Use `bash start.sh` instead of `./start.sh`
@@ -286,6 +304,7 @@ Then commit and push to trigger a redeploy.
 ### **For Production Deployments:**
 
 You may want to:
+
 1. **Remove sample stands** (keep users, suppliers, products)
 2. **Use stronger passwords** (change in `auto_init.py`)
 3. **Add your real suppliers** instead of sample ones
@@ -310,7 +329,7 @@ In `auto_init.py`, comment out the stands creation section:
 ✅ **Demo ready** - Sample data for testing  
 ✅ **Production ready** - Easily remove samples  
 ✅ **Error handling** - Smart duplicate detection  
-✅ **Logging** - Clear startup messages  
+✅ **Logging** - Clear startup messages
 
 ---
 
@@ -319,6 +338,7 @@ In `auto_init.py`, comment out the stands creation section:
 **Default passwords are weak for demo purposes!**
 
 For production:
+
 1. Change passwords in `auto_init.py`
 2. Or delete these users after creating your own
 3. Use environment variables for sensitive data
