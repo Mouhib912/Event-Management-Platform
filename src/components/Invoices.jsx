@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Badge } from './ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { FileText, Plus, Download, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { FileText, Plus, Download, CheckCircle, Clock, XCircle, User, Building2, Mail, Phone, MapPin, FileSignature, DollarSign } from 'lucide-react';
+import { Separator } from './ui/separator';
 import apiService from '../services/api';
 import { toast } from 'sonner';
 
@@ -17,13 +18,19 @@ const Invoices = () => {
   const [stands, setStands] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [signingDialogOpen, setSigningDialogOpen] = useState(false);
+  const [selectedInvoiceForSigning, setSelectedInvoiceForSigning] = useState(null);
+  const [advancePayment, setAdvancePayment] = useState(0);
+  const [selectedClient, setSelectedClient] = useState(null);
   const [formData, setFormData] = useState({
     stand_id: '',
-    client_name: '',
-    client_email: '',
-    client_phone: '',
-    client_address: '',
-    total_ht: 0
+    remise: 0,
+    remise_type: 'percentage',
+    tva_percentage: 19,
+    company_name: '',
+    company_address: '',
+    company_phone: '',
+    company_email: ''
   });
 
   useEffect(() => {
@@ -56,39 +63,70 @@ const Invoices = () => {
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Auto-calculate total_ht when stand is selected
+    // Auto-populate client info when stand is selected
     if (field === 'stand_id') {
       const selectedStand = stands.find(s => s.id === parseInt(value));
-      if (selectedStand) {
-        setFormData(prev => ({ ...prev, total_ht: selectedStand.total_amount }));
+      if (selectedStand && selectedStand.client) {
+        setSelectedClient(selectedStand.client);
+      } else {
+        setSelectedClient(null);
       }
     }
   };
 
   const handleCreateInvoice = async () => {
     try {
-      if (!formData.stand_id || !formData.client_name) {
-        toast.error('Veuillez remplir tous les champs obligatoires');
+      if (!formData.stand_id) {
+        toast.error('Veuillez sélectionner un stand');
         return;
       }
 
       await apiService.createInvoice(formData);
-      toast.success('Facture créée avec succès!');
+      toast.success('Devis créé avec succès!');
       
       setDialogOpen(false);
+      setSelectedClient(null);
       setFormData({
         stand_id: '',
-        client_name: '',
-        client_email: '',
-        client_phone: '',
-        client_address: '',
-        total_ht: 0
+        remise: 0,
+        remise_type: 'percentage',
+        tva_percentage: 19,
+        company_name: '',
+        company_address: '',
+        company_phone: '',
+        company_email: ''
       });
       
       loadData();
     } catch (error) {
       console.error('Error creating invoice:', error);
-      toast.error('Erreur lors de la création de la facture');
+      toast.error('Erreur lors de la création du devis');
+    }
+  };
+
+  const handleSignDevis = (invoice) => {
+    setSelectedInvoiceForSigning(invoice);
+    setAdvancePayment(0);
+    setSigningDialogOpen(true);
+  };
+
+  const handleConfirmSigning = async () => {
+    try {
+      if (!selectedInvoiceForSigning) return;
+
+      await apiService.updateInvoiceStatus(selectedInvoiceForSigning.id, {
+        status: 'facture',
+        advance_payment: advancePayment
+      });
+      
+      toast.success('Devis signé et converti en facture!');
+      setSigningDialogOpen(false);
+      setSelectedInvoiceForSigning(null);
+      setAdvancePayment(0);
+      loadData();
+    } catch (error) {
+      console.error('Error signing devis:', error);
+      toast.error('Erreur lors de la signature du devis');
     }
   };
 
@@ -115,9 +153,11 @@ const Invoices = () => {
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      pending: { label: 'En attente', variant: 'secondary', icon: Clock },
+      devis: { label: 'Devis', variant: 'secondary', icon: FileText },
+      facture: { label: 'Facture', variant: 'default', icon: FileSignature },
       paid: { label: 'Payée', variant: 'success', icon: CheckCircle },
-      cancelled: { label: 'Annulée', variant: 'destructive', icon: XCircle }
+      cancelled: { label: 'Annulée', variant: 'destructive', icon: XCircle },
+      pending: { label: 'En attente', variant: 'secondary', icon: Clock }
     };
 
     const config = statusConfig[status] || statusConfig.pending;
@@ -152,101 +192,182 @@ const Invoices = () => {
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Créer une Facture
+              Créer un Devis
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Créer une Nouvelle Facture</DialogTitle>
+              <DialogTitle>Créer un Nouveau Devis</DialogTitle>
             </DialogHeader>
             
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <Label htmlFor="stand">Stand *</Label>
-                  <Select
-                    value={formData.stand_id.toString()}
-                    onValueChange={(value) => handleInputChange('stand_id', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un stand" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {stands.map(stand => (
-                        <SelectItem key={stand.id} value={stand.id.toString()}>
-                          {stand.name} - {stand.total_amount.toFixed(2)} TND
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {stands.length === 0 && (
-                    <p className="text-sm text-amber-600 mt-1">
-                      Aucun stand approuvé disponible
-                    </p>
-                  )}
-                </div>
+            <div className="space-y-6">
+              {/* Stand Selection */}
+              <div>
+                <Label htmlFor="stand">Stand *</Label>
+                <Select
+                  value={formData.stand_id.toString()}
+                  onValueChange={(value) => handleInputChange('stand_id', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un stand" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {stands.map(stand => (
+                      <SelectItem key={stand.id} value={stand.id.toString()}>
+                        {stand.name} - {stand.total_amount.toFixed(2)} TND
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {stands.length === 0 && (
+                  <p className="text-sm text-amber-600 mt-1">
+                    Aucun stand approuvé disponible
+                  </p>
+                )}
+              </div>
 
-                <div className="col-span-2">
-                  <Label htmlFor="client_name">Nom du Client *</Label>
-                  <Input
-                    id="client_name"
-                    value={formData.client_name}
-                    onChange={(e) => handleInputChange('client_name', e.target.value)}
-                    placeholder="Nom complet du client"
-                  />
-                </div>
+              {/* Client Info (Auto-populated) */}
+              {selectedClient && (
+                <Card className="bg-gray-50">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Informations Client</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <User className="h-4 w-4 text-gray-500" />
+                      <span className="font-medium">{selectedClient.name}</span>
+                    </div>
+                    {selectedClient.company && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Building2 className="h-4 w-4 text-gray-500" />
+                        <span>{selectedClient.company}</span>
+                      </div>
+                    )}
+                    {selectedClient.email && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-4 w-4 text-gray-500" />
+                        <span>{selectedClient.email}</span>
+                      </div>
+                    )}
+                    {selectedClient.phone && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-4 w-4 text-gray-500" />
+                        <span>{selectedClient.phone}</span>
+                      </div>
+                    )}
+                    {selectedClient.address && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <MapPin className="h-4 w-4 text-gray-500" />
+                        <span>{selectedClient.address}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
-                <div>
-                  <Label htmlFor="client_email">Email</Label>
-                  <Input
-                    id="client_email"
-                    type="email"
-                    value={formData.client_email}
-                    onChange={(e) => handleInputChange('client_email', e.target.value)}
-                    placeholder="client@example.com"
-                  />
-                </div>
+              <Separator />
 
-                <div>
-                  <Label htmlFor="client_phone">Téléphone</Label>
-                  <Input
-                    id="client_phone"
-                    value={formData.client_phone}
-                    onChange={(e) => handleInputChange('client_phone', e.target.value)}
-                    placeholder="+216 XX XXX XXX"
-                  />
-                </div>
+              {/* Invoice Details */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Détails du Devis</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Remise */}
+                  <div>
+                    <Label htmlFor="remise">Remise</Label>
+                    <Input
+                      id="remise"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.remise}
+                      onChange={(e) => handleInputChange('remise', parseFloat(e.target.value) || 0)}
+                      placeholder="0"
+                    />
+                  </div>
 
-                <div className="col-span-2">
-                  <Label htmlFor="client_address">Adresse</Label>
-                  <Textarea
-                    id="client_address"
-                    value={formData.client_address}
-                    onChange={(e) => handleInputChange('client_address', e.target.value)}
-                    placeholder="Adresse complète du client"
-                    rows={2}
-                  />
-                </div>
+                  {/* Remise Type */}
+                  <div>
+                    <Label htmlFor="remise_type">Type de Remise</Label>
+                    <Select
+                      value={formData.remise_type}
+                      onValueChange={(value) => handleInputChange('remise_type', value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="percentage">Pourcentage (%)</SelectItem>
+                        <SelectItem value="fixed">Montant Fixe (TND)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div>
-                  <Label htmlFor="total_ht">Total HT (TND)</Label>
-                  <Input
-                    id="total_ht"
-                    type="number"
-                    step="0.01"
-                    value={formData.total_ht}
-                    onChange={(e) => handleInputChange('total_ht', parseFloat(e.target.value))}
-                    disabled
-                  />
+                  {/* TVA Percentage */}
+                  <div>
+                    <Label htmlFor="tva_percentage">TVA (%)</Label>
+                    <Input
+                      id="tva_percentage"
+                      type="number"
+                      step="0.1"
+                      min="0"
+                      max="100"
+                      value={formData.tva_percentage}
+                      onChange={(e) => handleInputChange('tva_percentage', parseFloat(e.target.value) || 19)}
+                      placeholder="19"
+                    />
+                  </div>
                 </div>
+              </div>
 
-                <div>
-                  <Label>Total TTC (TND)</Label>
-                  <Input
-                    value={(formData.total_ht * 1.19).toFixed(2)}
-                    disabled
-                  />
-                  <p className="text-xs text-gray-500 mt-1">TVA 19% incluse</p>
+              <Separator />
+
+              {/* Company Details */}
+              <div className="space-y-4">
+                <h3 className="font-semibold text-lg">Informations de Votre Entreprise</h3>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <Label htmlFor="company_name">Nom de l'Entreprise</Label>
+                    <Input
+                      id="company_name"
+                      value={formData.company_name}
+                      onChange={(e) => handleInputChange('company_name', e.target.value)}
+                      placeholder="Votre Entreprise"
+                    />
+                  </div>
+
+                  <div className="col-span-2">
+                    <Label htmlFor="company_address">Adresse</Label>
+                    <Textarea
+                      id="company_address"
+                      value={formData.company_address}
+                      onChange={(e) => handleInputChange('company_address', e.target.value)}
+                      placeholder="Adresse de votre entreprise"
+                      rows={2}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="company_phone">Téléphone</Label>
+                    <Input
+                      id="company_phone"
+                      value={formData.company_phone}
+                      onChange={(e) => handleInputChange('company_phone', e.target.value)}
+                      placeholder="+216 XX XXX XXX"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="company_email">Email</Label>
+                    <Input
+                      id="company_email"
+                      type="email"
+                      value={formData.company_email}
+                      onChange={(e) => handleInputChange('company_email', e.target.value)}
+                      placeholder="contact@entreprise.com"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -255,7 +376,69 @@ const Invoices = () => {
                   Annuler
                 </Button>
                 <Button onClick={handleCreateInvoice}>
-                  Créer la Facture
+                  Créer le Devis
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Signing Dialog */}
+        <Dialog open={signingDialogOpen} onOpenChange={setSigningDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Signer le Devis</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Le devis sera converti en facture après signature.
+              </p>
+              
+              {selectedInvoiceForSigning && (
+                <div className="bg-gray-50 p-4 rounded-lg space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">N° Devis:</span>
+                    <span className="text-sm">{selectedInvoiceForSigning.invoice_number}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Client:</span>
+                    <span className="text-sm">{selectedInvoiceForSigning.client_name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium">Total TTC:</span>
+                    <span className="text-sm font-bold">{selectedInvoiceForSigning.total_ttc.toFixed(2)} TND</span>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <Label htmlFor="advance_payment">Montant de l'Acompte (TND)</Label>
+                <div className="relative mt-1">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="advance_payment"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={advancePayment}
+                    onChange={(e) => setAdvancePayment(parseFloat(e.target.value) || 0)}
+                    placeholder="0.00"
+                    className="pl-10"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Montant versé en acompte par le client
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setSigningDialogOpen(false)}>
+                  Annuler
+                </Button>
+                <Button onClick={handleConfirmSigning}>
+                  <FileSignature className="mr-2 h-4 w-4" />
+                  Confirmer la Signature
                 </Button>
               </div>
             </div>
@@ -351,7 +534,7 @@ const Invoices = () => {
                     <TableCell className="font-bold">{invoice.total_ttc.toFixed(2)} TND</TableCell>
                     <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
                         <Button
                           size="sm"
                           variant="outline"
@@ -360,17 +543,32 @@ const Invoices = () => {
                           <Download className="h-4 w-4" />
                         </Button>
                         
-                        {invoice.status === 'pending' && (
+                        {/* Sign devis button */}
+                        {invoice.status === 'devis' && (
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => handleSignDevis(invoice)}
+                          >
+                            <FileSignature className="h-4 w-4 mr-1" />
+                            Signer
+                          </Button>
+                        )}
+                        
+                        {/* Mark as paid button for facture status */}
+                        {invoice.status === 'facture' && (
                           <Button
                             size="sm"
                             variant="default"
                             onClick={() => handleUpdateStatus(invoice.id, 'paid')}
                           >
-                            Marquer payée
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Payée
                           </Button>
                         )}
                         
-                        {invoice.status === 'pending' && (
+                        {/* Cancel button for devis/facture */}
+                        {(invoice.status === 'devis' || invoice.status === 'facture') && (
                           <Button
                             size="sm"
                             variant="destructive"

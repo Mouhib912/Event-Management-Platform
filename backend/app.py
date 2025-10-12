@@ -169,6 +169,12 @@ class Invoice(db.Model):
     total_ht = db.Column(db.Float, nullable=False)
     tva_amount = db.Column(db.Float, nullable=False)
     total_ttc = db.Column(db.Float, nullable=False)
+    # Discount/remise fields
+    remise = db.Column(db.Float, default=0)  # Discount amount or percentage
+    remise_type = db.Column(db.String(20), default='percentage')  # 'percentage' or 'fixed'
+    tva_percentage = db.Column(db.Float, default=19)  # Customizable TVA rate
+    # Payment tracking
+    advance_payment = db.Column(db.Float, default=0)  # Amount paid upfront when signing
     # Status: 'devis' (initial quote), 'facture' (approved/signed), 'paid', 'cancelled'
     status = db.Column(db.String(20), default='devis')
     # Agent who handled the devis/facture
@@ -1276,14 +1282,31 @@ def create_invoice():
     invoice_count = Invoice.query.count() + 1
     invoice_number = f"DEV-{datetime.now().year}-{invoice_count:04d}"
     
-    # Get client info
+    # Get client info from stand
     client = None
     if stand.client_id:
         client = Client.query.get(stand.client_id)
     
-    # Calculate totals
-    total_ht = data.get('total_ht', stand.total_amount)
-    tva_amount = total_ht * 0.19
+    # Get discount/remise values
+    remise = float(data.get('remise', 0))
+    remise_type = data.get('remise_type', 'percentage')
+    tva_percentage = float(data.get('tva_percentage', 19))
+    
+    # Calculate totals with remise
+    base_total = stand.total_amount
+    
+    # Apply remise based on type
+    if remise > 0:
+        if remise_type == 'percentage':
+            remise_amount = base_total * (remise / 100)
+        else:  # fixed
+            remise_amount = remise
+        total_ht = base_total - remise_amount
+    else:
+        total_ht = base_total
+    
+    # Calculate TVA with custom percentage
+    tva_amount = total_ht * (tva_percentage / 100)
     total_ttc = total_ht + tva_amount
     
     invoice = Invoice(
@@ -1298,6 +1321,9 @@ def create_invoice():
         total_ht=total_ht,
         tva_amount=tva_amount,
         total_ttc=total_ttc,
+        remise=remise,
+        remise_type=remise_type,
+        tva_percentage=tva_percentage,
         status='devis',  # Start as devis
         agent_name=current_user.name,
         company_name=data.get('company_name', 'Votre Entreprise'),
@@ -1327,18 +1353,22 @@ def update_invoice_status(invoice_id):
         new_status = data['status']
         invoice.status = new_status
         
-        # If converting devis to facture, update the number and set approval date
+        # If converting devis to facture (signing), update the number, set approval date, and record advance payment
         if old_status == 'devis' and new_status == 'facture':
             # Change DEV to FAC in the number
             invoice.invoice_number = invoice.invoice_number.replace('DEV-', 'FAC-')
             invoice.approved_at = datetime.utcnow()
+            
+            # Record advance payment if provided
+            if 'advance_payment' in data:
+                invoice.advance_payment = float(data['advance_payment'])
         
         db.session.commit()
     
     return jsonify({
         'message': 'Invoice updated successfully',
         'invoice_number': invoice.invoice_number
-    })
+    }), 200
 
 # Invoice/Devis PDF Generation
 def generate_invoice_pdf(invoice_id):
