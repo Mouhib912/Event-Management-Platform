@@ -320,7 +320,8 @@ Instead of manual setup, you can use Infrastructure as Code:
 
 ### Issue: "This host is not allowed" error
 
-**Error Message**: 
+**Error Message**:
+
 ```
 Blocked request. This host ("your-app.onrender.com") is not allowed.
 To allow this host, add "your-app.onrender.com" to `preview.allowedHosts` in vite.config.js.
