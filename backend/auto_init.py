@@ -136,31 +136,31 @@ def init_database_with_samples():
             
             products_data = [
                 # Mobilier
-                {'name': 'Table Standard 180x80cm', 'category_id': categories[0].id, 'supplier_id': suppliers[0].id, 'price': 25.0, 'pricing_type': 'Par Jour'},
-                {'name': 'Chaise Pliante', 'category_id': categories[0].id, 'supplier_id': suppliers[0].id, 'price': 5.0, 'pricing_type': 'Par Jour'},
-                {'name': 'Comptoir d\'Accueil', 'category_id': categories[0].id, 'supplier_id': suppliers[3].id, 'price': 120.0, 'pricing_type': 'Par Jour'},
-                {'name': 'Présentoir Rotatif', 'category_id': categories[0].id, 'supplier_id': suppliers[3].id, 'price': 80.0, 'pricing_type': 'Par Jour'},
+                {'name': 'Table Standard 180x80cm', 'category_id': categories[0].id, 'supplier_id': suppliers[0].id, 'unit': 'Pièce', 'price': 25.0, 'pricing_type': 'Par Jour'},
+                {'name': 'Chaise Pliante', 'category_id': categories[0].id, 'supplier_id': suppliers[0].id, 'unit': 'Pièce', 'price': 5.0, 'pricing_type': 'Par Jour'},
+                {'name': 'Comptoir d\'Accueil', 'category_id': categories[0].id, 'supplier_id': suppliers[3].id, 'unit': 'Pièce', 'price': 120.0, 'pricing_type': 'Par Jour'},
+                {'name': 'Présentoir Rotatif', 'category_id': categories[0].id, 'supplier_id': suppliers[3].id, 'unit': 'Pièce', 'price': 80.0, 'pricing_type': 'Par Jour'},
                 
                 # Électronique
-                {'name': 'Écran LED 55"', 'category_id': categories[1].id, 'supplier_id': suppliers[1].id, 'price': 150.0, 'pricing_type': 'Par Jour'},
-                {'name': 'Projecteur Full HD', 'category_id': categories[1].id, 'supplier_id': suppliers[1].id, 'price': 200.0, 'pricing_type': 'Par Jour'},
-                {'name': 'Système Audio Complet', 'category_id': categories[1].id, 'supplier_id': suppliers[1].id, 'price': 180.0, 'pricing_type': 'Par Jour'},
-                {'name': 'Tablette Tactile pour Présentation', 'category_id': categories[1].id, 'supplier_id': suppliers[1].id, 'price': 60.0, 'pricing_type': 'Par Jour'},
+                {'name': 'Écran LED 55"', 'category_id': categories[1].id, 'supplier_id': suppliers[1].id, 'unit': 'Pièce', 'price': 150.0, 'pricing_type': 'Par Jour'},
+                {'name': 'Projecteur Full HD', 'category_id': categories[1].id, 'supplier_id': suppliers[1].id, 'unit': 'Pièce', 'price': 200.0, 'pricing_type': 'Par Jour'},
+                {'name': 'Système Audio Complet', 'category_id': categories[1].id, 'supplier_id': suppliers[1].id, 'unit': 'Ensemble', 'price': 180.0, 'pricing_type': 'Par Jour'},
+                {'name': 'Tablette Tactile pour Présentation', 'category_id': categories[1].id, 'supplier_id': suppliers[1].id, 'unit': 'Pièce', 'price': 60.0, 'pricing_type': 'Par Jour'},
                 
                 # Éclairage
-                {'name': 'Spot LED 50W', 'category_id': categories[2].id, 'supplier_id': suppliers[2].id, 'price': 15.0, 'pricing_type': 'Par Jour'},
-                {'name': 'Rampe LED RGB', 'category_id': categories[2].id, 'supplier_id': suppliers[2].id, 'price': 45.0, 'pricing_type': 'Par Jour'},
-                {'name': 'Projecteur Architectural', 'category_id': categories[2].id, 'supplier_id': suppliers[2].id, 'price': 90.0, 'pricing_type': 'Par Jour'},
+                {'name': 'Spot LED 50W', 'category_id': categories[2].id, 'supplier_id': suppliers[2].id, 'unit': 'Pièce', 'price': 15.0, 'pricing_type': 'Par Jour'},
+                {'name': 'Rampe LED RGB', 'category_id': categories[2].id, 'supplier_id': suppliers[2].id, 'unit': 'Pièce', 'price': 45.0, 'pricing_type': 'Par Jour'},
+                {'name': 'Projecteur Architectural', 'category_id': categories[2].id, 'supplier_id': suppliers[2].id, 'unit': 'Pièce', 'price': 90.0, 'pricing_type': 'Par Jour'},
                 
                 # Décoration
-                {'name': 'Kakémono 200x80cm', 'category_id': categories[3].id, 'supplier_id': suppliers[2].id, 'price': 35.0, 'pricing_type': 'Par Jour'},
-                {'name': 'Bannière Publicitaire 3x1m', 'category_id': categories[3].id, 'supplier_id': suppliers[2].id, 'price': 50.0, 'pricing_type': 'Par Jour'},
-                {'name': 'Plante Décorative Artificielle', 'category_id': categories[3].id, 'supplier_id': suppliers[3].id, 'price': 20.0, 'pricing_type': 'Par Jour'},
+                {'name': 'Kakémono 200x80cm', 'category_id': categories[3].id, 'supplier_id': suppliers[2].id, 'unit': 'Pièce', 'price': 35.0, 'pricing_type': 'Par Jour'},
+                {'name': 'Bannière Publicitaire 3x1m', 'category_id': categories[3].id, 'supplier_id': suppliers[2].id, 'unit': 'Pièce', 'price': 50.0, 'pricing_type': 'Par Jour'},
+                {'name': 'Plante Décorative Artificielle', 'category_id': categories[3].id, 'supplier_id': suppliers[3].id, 'unit': 'Pièce', 'price': 20.0, 'pricing_type': 'Par Jour'},
                 
                 # Structure
-                {'name': 'Stand Modulaire 3x3m', 'category_id': categories[4].id, 'supplier_id': suppliers[0].id, 'price': 450.0, 'pricing_type': 'Forfait'},
-                {'name': 'Cloison Démontable 2m', 'category_id': categories[4].id, 'supplier_id': suppliers[0].id, 'price': 40.0, 'pricing_type': 'Par Jour'},
-                {'name': 'Toit pour Stand 3x3m', 'category_id': categories[4].id, 'supplier_id': suppliers[0].id, 'price': 100.0, 'pricing_type': 'Forfait'},
+                {'name': 'Stand Modulaire 3x3m', 'category_id': categories[4].id, 'supplier_id': suppliers[0].id, 'unit': 'Ensemble', 'price': 450.0, 'pricing_type': 'Forfait'},
+                {'name': 'Cloison Démontable 2m', 'category_id': categories[4].id, 'supplier_id': suppliers[0].id, 'unit': 'Pièce', 'price': 40.0, 'pricing_type': 'Par Jour'},
+                {'name': 'Toit pour Stand 3x3m', 'category_id': categories[4].id, 'supplier_id': suppliers[0].id, 'unit': 'Ensemble', 'price': 100.0, 'pricing_type': 'Forfait'},
             ]
             
             products = []
