@@ -3,6 +3,7 @@
 ## Vue d'Ensemble
 
 Le système de gestion des produits a été complètement repensé pour offrir une expérience utilisateur optimale avec :
+
 - **2 vues différentes** : Vue grille et vue par catégorie
 - **Filtrage avancé** : Par catégorie, type de tarification, et recherche textuelle
 - **Tri intelligent** : Par nom, prix, ou catégorie
@@ -14,12 +15,14 @@ Le système de gestion des produits a été complètement repensé pour offrir u
 ### 1. Catalogue Produits
 
 #### **Vue Grille** 📊
+
 - Affichage en cartes élégantes
 - Informations claires : nom, description, prix, catégorie, fournisseur
 - Badges colorés pour le type de tarification
 - Actions rapides (modifier/supprimer) directement sur la carte
 
 #### **Vue Par Catégorie** 🏷️
+
 - Produits regroupés par catégorie
 - Compteur de produits par catégorie
 - Navigation intuitive entre les catégories
@@ -28,10 +31,12 @@ Le système de gestion des produits a été complètement repensé pour offrir u
 ### 2. Filtres et Recherche 🔍
 
 **Barre de recherche**
+
 - Recherche en temps réel par nom ou description
 - Insensible à la casse
 
 **Filtres disponibles**
+
 - **Par catégorie** : Filtrer par une catégorie spécifique ou voir toutes
 - **Par type de tarification** : "Par Jour" ou "Forfait"
 - **Tri** : Par nom, prix, ou catégorie (ordre croissant)
@@ -39,6 +44,7 @@ Le système de gestion des produits a été complètement repensé pour offrir u
 ### 3. Gestion des Produits ➕
 
 **Créer un nouveau produit**
+
 1. Cliquer sur "Nouveau Produit"
 2. Remplir le formulaire :
    - Nom du produit **(obligatoire)**
@@ -51,20 +57,24 @@ Le système de gestion des produits a été complètement repensé pour offrir u
 3. Cliquer sur "Créer"
 
 **Modifier un produit**
+
 - Cliquer sur l'icône d'édition (crayon) sur la carte du produit
 - Modifier les informations
 - Sauvegarder
 
 **Supprimer un produit**
+
 - Cliquer sur l'icône de suppression (poubelle)
 - Confirmer la suppression
 
 ### 4. Gestion des Catégories 📁
 
 **Accéder à la gestion des catégories**
+
 - Bouton "Gérer Catégories" en haut à droite
 
 **Créer une nouvelle catégorie**
+
 1. Cliquer sur "Gérer Catégories"
 2. Remplir le formulaire :
    - Nom **(obligatoire)**
@@ -72,10 +82,12 @@ Le système de gestion des produits a été complètement repensé pour offrir u
 3. Cliquer sur "Créer"
 
 **Modifier une catégorie**
+
 - Dans la vue par catégorie, cliquer sur l'icône d'édition à côté du nom
 - Ou dans la section "Gestion des Catégories" en bas de page
 
 **Supprimer une catégorie**
+
 - **Attention** : Une catégorie ne peut être supprimée que si aucun produit ne l'utilise
 - Le système affiche le nombre de produits par catégorie
 - Si des produits existent, vous devrez d'abord les réassigner ou les supprimer
@@ -83,6 +95,7 @@ Le système de gestion des produits a été complètement repensé pour offrir u
 ### 5. Section Gestion des Catégories (bas de page) 🛠️
 
 Pour les administrateurs, une section dédiée affiche:
+
 - Toutes les catégories avec leur description
 - Le nombre de produits par catégorie
 - Actions rapides pour modifier ou supprimer
@@ -98,6 +111,7 @@ Pour les administrateurs, une section dédiée affiche:
 ## 👥 Permissions
 
 **Qui peut gérer les produits et catégories?**
+
 - **Propriétaire** (admin) : Accès complet
 - **Commercial** : Peut gérer produits et catégories
 - **Logistique** : Peut gérer produits et catégories
@@ -107,6 +121,7 @@ Pour les administrateurs, une section dédiée affiche:
 ## 📊 Statistiques en Temps Réel
 
 En haut de la page, vous pouvez voir:
+
 - Nombre total de produits
 - Nombre total de catégories
 
@@ -121,15 +136,18 @@ En haut de la page, vous pouvez voir:
 ## 🔄 Workflow Typique
 
 1. **Configuration initiale**
+
    - Créer les catégories principales (Mobilier, Électronique, Décoration, etc.)
    - Ajouter les fournisseurs
 
 2. **Ajout de produits**
+
    - Créer les produits en les assignant aux bonnes catégories
    - Définir les prix et types de tarification
    - Ajouter des descriptions claires
 
 3. **Utilisation quotidienne**
+
    - Utiliser les filtres pour trouver rapidement un produit
    - Basculer entre vue grille et vue par catégorie selon le besoin
    - Modifier les prix si nécessaire
@@ -142,16 +160,19 @@ En haut de la page, vous pouvez voir:
 ## 🎯 Cas d'Usage
 
 **Créer un stand**
+
 1. Aller dans "Vue Par Catégorie"
 2. Parcourir les catégories une par une
 3. Sélectionner les produits nécessaires
 
 **Comparer les prix**
+
 1. Utiliser le tri par prix
 2. Filtrer par type de tarification si nécessaire
 3. Vue grille pour voir les prix en grand
 
 **Recherche rapide**
+
 1. Utiliser la barre de recherche
 2. Taper quelques lettres du nom du produit
 3. Les résultats s'affichent instantanément

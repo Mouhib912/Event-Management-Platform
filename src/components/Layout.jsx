@@ -128,16 +128,7 @@ export default function Layout({ children }) {
       })
     }
 
-    // Categories - Owner only
-    if (canAccess('categories')) {
-      items.push({ 
-        path: '/categories', 
-        label: 'Catégories', 
-        icon: Tags 
-      })
-    }
-
-    // Products
+    // Products (includes category management)
     if (canAccess('products')) {
       items.push({ 
         path: '/products', 
