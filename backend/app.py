@@ -53,7 +53,7 @@ class Supplier(db.Model):
     address = db.Column(db.Text)
     status = db.Column(db.String(20), default='Actif')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
