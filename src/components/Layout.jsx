@@ -32,6 +32,18 @@ export default function Layout({ children }) {
   const location = useLocation()
   const { user, logout, canAccess } = useAuth()
 
+  // Map backend roles to display names
+  const getRoleDisplayName = (role) => {
+    const roleMapping = {
+      'admin': 'Administrateur',
+      'logistics': 'Logistique',
+      'finance': 'Finance',
+      'commercial': 'Commercial',
+      'visitor': 'Visiteur'
+    }
+    return roleMapping[role?.toLowerCase()] || role
+  }
+
   const getNavigationItems = () => {
     const items = []
 
@@ -191,7 +203,7 @@ export default function Layout({ children }) {
             </div>
             
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">{user?.role}</span>
+              <span className="text-sm text-gray-600">{getRoleDisplayName(user?.role)}</span>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">

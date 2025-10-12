@@ -56,6 +56,17 @@ export const AuthProvider = ({ children }) => {
   const hasPermission = (requiredRole) => {
     if (!user) return false
     
+    // Map backend roles to frontend roles
+    const roleMapping = {
+      'admin': 'Propriétaire',
+      'logistics': 'Logistique',
+      'finance': 'Finance',
+      'commercial': 'Commercial',
+      'visitor': 'Visiteur'
+    }
+    
+    const mappedUserRole = roleMapping[user.role.toLowerCase()] || user.role
+    
     const roleHierarchy = {
       'Propriétaire': 5,
       'Commercial': 4,
@@ -64,7 +75,7 @@ export const AuthProvider = ({ children }) => {
       'Visiteur': 1
     }
     
-    const userLevel = roleHierarchy[user.role] || 0
+    const userLevel = roleHierarchy[mappedUserRole] || 0
     const requiredLevel = roleHierarchy[requiredRole] || 0
     
     return userLevel >= requiredLevel
@@ -72,6 +83,17 @@ export const AuthProvider = ({ children }) => {
 
   const canAccess = (module) => {
     if (!user) return false
+    
+    // Map backend roles to frontend roles
+    const roleMapping = {
+      'admin': 'Propriétaire',
+      'logistics': 'Logistique',
+      'finance': 'Finance',
+      'commercial': 'Commercial',
+      'visitor': 'Visiteur'
+    }
+    
+    const mappedUserRole = roleMapping[user.role.toLowerCase()] || user.role
     
     const permissions = {
       'dashboard': ['Propriétaire', 'Commercial', 'Logistique', 'Finance', 'Visiteur'],
@@ -86,7 +108,7 @@ export const AuthProvider = ({ children }) => {
       'user-management': ['Propriétaire']
     }
     
-    return permissions[module]?.includes(user.role) || false
+    return permissions[module]?.includes(mappedUserRole) || false
   }
 
   const value = {
