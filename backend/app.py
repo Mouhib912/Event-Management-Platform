@@ -67,6 +67,18 @@ class Supplier(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
+class Client(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    contact_person = db.Column(db.String(100))
+    email = db.Column(db.String(120))
+    phone = db.Column(db.String(20))
+    address = db.Column(db.Text)
+    company = db.Column(db.String(100))
+    status = db.Column(db.String(20), default='Actif')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+
 class Category(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -93,6 +105,7 @@ class Product(db.Model):
 class Stand(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
     description = db.Column(db.Text)
     status = db.Column(db.String(20), default='draft')  # draft, validated_logistics, validated_finance, approved
     total_amount = db.Column(db.Float, nullable=False)
@@ -102,6 +115,7 @@ class Stand(db.Model):
     validated_finance_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     
     creator = db.relationship('User', foreign_keys=[created_by], backref='created_stands')
+    client = db.relationship('Client', backref='stands')
 
 class StandItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -346,6 +360,113 @@ def delete_supplier(supplier_id):
     db.session.commit()
     
     return jsonify({'message': 'Supplier deleted successfully'})
+
+# Client Routes
+@app.route('/api/clients', methods=['GET'])
+@jwt_required()
+def get_clients():
+    try:
+        clients = Client.query.all()
+        return jsonify([{
+            'id': c.id,
+            'name': c.name,
+            'contact_person': c.contact_person,
+            'email': c.email,
+            'phone': c.phone,
+            'address': c.address,
+            'company': c.company,
+            'status': c.status if hasattr(c, 'status') else 'Actif',
+            'created_at': c.created_at.isoformat() if c.created_at else None
+        } for c in clients])
+    except Exception as e:
+        print(f"Error in get_clients: {str(e)}")
+        return jsonify({'message': f'Error fetching clients: {str(e)}'}), 500
+
+@app.route('/api/clients', methods=['POST'])
+@jwt_required()
+def create_client():
+    try:
+        current_user_id = int(get_jwt_identity())
+        current_user = User.query.get(current_user_id)
+        
+        user_role = get_mapped_role(current_user.role)
+        
+        # Admin and Commercial can create clients
+        if user_role not in ['Propriétaire', 'Commercial']:
+            return jsonify({'message': 'Unauthorized'}), 403
+        
+        data = request.get_json()
+        
+        client = Client(
+            name=data['name'],
+            contact_person=data.get('contact_person'),
+            email=data.get('email'),
+            phone=data.get('phone'),
+            address=data.get('address'),
+            company=data.get('company'),
+            status=data.get('status', 'Actif'),
+            created_by=current_user_id
+        )
+        
+        db.session.add(client)
+        db.session.commit()
+        
+        return jsonify({'message': 'Client created successfully', 'id': client.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error in create_client: {str(e)}")
+        return jsonify({'message': f'Error creating client: {str(e)}'}), 500
+
+@app.route('/api/clients/<int:client_id>', methods=['PUT'])
+@jwt_required()
+def update_client(client_id):
+    try:
+        current_user_id = int(get_jwt_identity())
+        current_user = User.query.get(current_user_id)
+        
+        user_role = get_mapped_role(current_user.role)
+        
+        # Admin and Commercial can update clients
+        if user_role not in ['Propriétaire', 'Commercial']:
+            return jsonify({'message': 'Unauthorized'}), 403
+        
+        client = Client.query.get_or_404(client_id)
+        data = request.get_json()
+        
+        client.name = data.get('name', client.name)
+        client.contact_person = data.get('contact_person', client.contact_person)
+        client.email = data.get('email', client.email)
+        client.phone = data.get('phone', client.phone)
+        client.address = data.get('address', client.address)
+        client.company = data.get('company', client.company)
+        if 'status' in data:
+            client.status = data['status']
+        
+        db.session.commit()
+        
+        return jsonify({'message': 'Client updated successfully'})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error in update_client: {str(e)}")
+        return jsonify({'message': f'Error updating client: {str(e)}'}), 500
+
+@app.route('/api/clients/<int:client_id>', methods=['DELETE'])
+@jwt_required()
+def delete_client(client_id):
+    current_user_id = int(get_jwt_identity())
+    current_user = User.query.get(current_user_id)
+    
+    user_role = get_mapped_role(current_user.role)
+    
+    # Only Admin can delete clients
+    if user_role != 'Propriétaire':
+        return jsonify({'message': 'Unauthorized'}), 403
+    
+    client = Client.query.get_or_404(client_id)
+    db.session.delete(client)
+    db.session.commit()
+    
+    return jsonify({'message': 'Client deleted successfully'})
 
 # Category Routes
 @app.route('/api/categories', methods=['GET'])

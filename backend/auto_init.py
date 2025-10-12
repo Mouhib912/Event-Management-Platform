@@ -9,7 +9,7 @@ This script runs automatically on startup and creates:
 - Sample stands
 """
 
-from app import app, db, User, Supplier, Category, Product, Stand
+from app import app, db, User, Supplier, Client, Category, Product, Stand
 from werkzeug.security import generate_password_hash
 from datetime import datetime
 
@@ -111,6 +111,45 @@ def init_database_with_samples():
             db.session.flush()
             print(f"   ✅ Created {len(suppliers)} suppliers")
             
+            # ==================== CLIENTS ====================
+            print("👥 Creating clients...")
+            
+            clients_data = [
+                {
+                    'name': 'Tech Innovators SARL',
+                    'contact_person': 'Karim Belhadj',
+                    'email': 'contact@techinnovators.tn',
+                    'phone': '+216 71 555 111',
+                    'address': '25 Avenue de la Liberté, Tunis 1002',
+                    'company': 'Tech Innovators SARL'
+                },
+                {
+                    'name': 'Elegance Boutique',
+                    'contact_person': 'Amira Jaziri',
+                    'email': 'info@elegance.tn',
+                    'phone': '+216 71 555 222',
+                    'address': '18 Rue de Carthage, La Marsa 2070',
+                    'company': 'Elegance Boutique'
+                },
+                {
+                    'name': 'Global Trade Corp',
+                    'contact_person': 'Mohamed Slim',
+                    'email': 'contact@globaltrade.tn',
+                    'phone': '+216 71 555 333',
+                    'address': '45 Boulevard 9 Avril, Tunis 1001',
+                    'company': 'Global Trade Corp'
+                }
+            ]
+            
+            clients = []
+            for data in clients_data:
+                client = Client(**data)
+                db.session.add(client)
+                clients.append(client)
+            
+            db.session.flush()
+            print(f"   ✅ Created {len(clients)} clients")
+            
             # ==================== CATEGORIES ====================
             print("📂 Creating categories...")
             
@@ -178,14 +217,16 @@ def init_database_with_samples():
             stands_data = [
                 {
                     'name': 'Stand Tech Innovators',
-                    'description': 'Stand 3x3m pour Tunisia Tech Summit 2025 - Client: Tech Innovators SARL',
+                    'client_id': clients[0].id,
+                    'description': 'Stand 3x3m pour Tunisia Tech Summit 2025',
                     'status': 'draft',
                     'total_amount': 0.0,
                     'created_by': admin.id
                 },
                 {
                     'name': 'Stand Fashion Week',
-                    'description': 'Stand 4x4m pour Tunisia Fashion Week - Client: Elegance Boutique',
+                    'client_id': clients[1].id,
+                    'description': 'Stand 4x4m pour Tunisia Fashion Week',
                     'status': 'validated_logistics',
                     'total_amount': 0.0,
                     'created_by': admin.id,
@@ -210,6 +251,7 @@ def init_database_with_samples():
             print("="*60)
             print("\n📊 SUMMARY:")
             print(f"   • {len(suppliers)} Suppliers")
+            print(f"   • {len(clients)} Clients")
             print(f"   • {len(categories)} Categories")
             print(f"   • {len(products)} Products")
             print(f"   • {len(stands)} Sample Stands")
