@@ -14,9 +14,7 @@ import {
   User,
   DollarSign,
   Package,
-  Trash2,
-  CheckCircle,
-  CheckCheck
+  Trash2
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import * as XLSX from 'xlsx'
@@ -113,31 +111,6 @@ export default function StandCatalog() {
       toast.success('Stand supprimé avec succès')
     }
   }
-
-  const validateLogistics = async (standId) => {
-    try {
-      await apiService.validateStandLogistics(standId)
-      toast.success('Validation logistique effectuée!')
-      loadStands() // Reload to get updated status
-    } catch (error) {
-      console.error('Error validating logistics:', error)
-      toast.error('Erreur lors de la validation logistique')
-    }
-  }
-
-  const validateFinance = async (standId) => {
-    try {
-      await apiService.validateStandFinance(standId)
-      toast.success('Validation finance effectuée! Stand approuvé.')
-      loadStands() // Reload to get updated status
-    } catch (error) {
-      console.error('Error validating finance:', error)
-      toast.error('Erreur lors de la validation finance')
-    }
-  }
-
-  const canValidateLogistics = user?.role === 'Logistique' || user?.role === 'Propriétaire'
-  const canValidateFinance = user?.role === 'Finance' || user?.role === 'Propriétaire'
 
   if (!canView) {
     return (
@@ -243,32 +216,6 @@ export default function StandCatalog() {
                   </Button>
                 )}
               </div>
-
-              {/* Validation Buttons */}
-              {(canValidateLogistics || canValidateFinance) && stand.status !== 'approved' && (
-                <div className="flex space-x-2 pt-2 border-t">
-                  {canValidateLogistics && stand.status === 'draft' && (
-                    <Button
-                      size="sm"
-                      onClick={() => validateLogistics(stand.id)}
-                      className="flex-1 bg-blue-500 hover:bg-blue-600"
-                    >
-                      <CheckCircle className="mr-1 h-3 w-3" />
-                      Valider Logistique
-                    </Button>
-                  )}
-                  {canValidateFinance && (stand.status === 'validated_logistics' || stand.status === 'draft') && (
-                    <Button
-                      size="sm"
-                      onClick={() => validateFinance(stand.id)}
-                      className="flex-1 bg-green-500 hover:bg-green-600"
-                    >
-                      <CheckCheck className="mr-1 h-3 w-3" />
-                      Valider Finance
-                    </Button>
-                  )}
-                </div>
-              )}
             </CardContent>
           </Card>
         ))}

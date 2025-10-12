@@ -160,18 +160,31 @@ class Invoice(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     invoice_number = db.Column(db.String(20), unique=True, nullable=False)
     stand_id = db.Column(db.Integer, db.ForeignKey('stand.id'), nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
     client_name = db.Column(db.String(100), nullable=False)
     client_email = db.Column(db.String(120))
     client_phone = db.Column(db.String(20))
     client_address = db.Column(db.Text)
+    client_company = db.Column(db.String(100))
     total_ht = db.Column(db.Float, nullable=False)
     tva_amount = db.Column(db.Float, nullable=False)
     total_ttc = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(20), default='pending')  # pending, paid, cancelled
+    # Status: 'devis' (initial quote), 'facture' (approved/signed), 'paid', 'cancelled'
+    status = db.Column(db.String(20), default='devis')
+    # Agent who handled the devis/facture
+    agent_name = db.Column(db.String(100))
+    # Company details
+    company_name = db.Column(db.String(200), default='Votre Entreprise')
+    company_address = db.Column(db.Text)
+    company_phone = db.Column(db.String(20))
+    company_email = db.Column(db.String(120))
+    # Dates
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    approved_at = db.Column(db.DateTime, nullable=True)  # When devis becomes facture
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     
     stand = db.relationship('Stand', backref='invoices')
+    client = db.relationship('Client', backref='invoices')
     creator = db.relationship('User', backref='created_invoices')
 
 # Health Check Route for Render
@@ -714,8 +727,10 @@ def create_stand():
     
     stand = Stand(
         name=data['name'],
+        client_id=data.get('client_id'),
         description=data.get('description'),
         total_amount=data['total_amount'],
+        status='approved',  # Stands are automatically approved
         created_by=current_user_id
     )
     
@@ -734,9 +749,65 @@ def create_stand():
         )
         db.session.add(item)
     
+    # Group products by supplier and create Bon de Commande for each supplier
+    supplier_items = {}  # {supplier_id: [items]}
+    
+    for item_data in data['items']:
+        product = Product.query.get(item_data['product_id'])
+        if product:
+            supplier_id = product.supplier_id
+            if supplier_id not in supplier_items:
+                supplier_items[supplier_id] = []
+            supplier_items[supplier_id].append(item_data)
+    
+    # Create a Bon de Commande (Purchase) for each supplier
+    created_purchases = []
+    for supplier_id, items in supplier_items.items():
+        # Calculate total for this supplier
+        supplier_total = sum(item['total_price'] for item in items)
+        
+        # Generate purchase number
+        purchase_count = Purchase.query.count() + 1
+        purchase_number = f"BC-{datetime.now().year}-{purchase_count:03d}"
+        
+        purchase = Purchase(
+            stand_id=stand.id,
+            purchase_number=purchase_number,
+            supplier_id=supplier_id,
+            total_amount=supplier_total,
+            status='pending',
+            notes=f"Généré automatiquement pour le stand: {data['name']}",
+            created_by=current_user_id
+        )
+        
+        db.session.add(purchase)
+        db.session.flush()  # Get purchase ID
+        
+        # Add purchase items
+        for item_data in items:
+            purchase_item = PurchaseItem(
+                purchase_id=purchase.id,
+                product_id=item_data['product_id'],
+                quantity=item_data['quantity'],
+                days=item_data.get('days', 1),
+                unit_price=item_data['unit_price'],
+                total_price=item_data['total_price']
+            )
+            db.session.add(purchase_item)
+        
+        created_purchases.append({
+            'id': purchase.id,
+            'purchase_number': purchase_number,
+            'supplier_id': supplier_id
+        })
+    
     db.session.commit()
     
-    return jsonify({'message': 'Stand created successfully', 'stand_id': stand.id}), 201
+    return jsonify({
+        'message': 'Stand created successfully',
+        'stand_id': stand.id,
+        'purchases_created': created_purchases
+    }), 201
 
 @app.route('/api/stands/<int:stand_id>/validate-logistics', methods=['POST'])
 @jwt_required()
@@ -1169,14 +1240,23 @@ def get_invoices():
         'invoice_number': inv.invoice_number,
         'stand_id': inv.stand_id,
         'stand_name': inv.stand.name if inv.stand else None,
+        'client_id': inv.client_id,
         'client_name': inv.client_name,
         'client_email': inv.client_email,
         'client_phone': inv.client_phone,
+        'client_address': inv.client_address,
+        'client_company': inv.client_company,
         'total_ht': inv.total_ht,
         'tva_amount': inv.tva_amount,
         'total_ttc': inv.total_ttc,
         'status': inv.status,
+        'agent_name': inv.agent_name,
+        'company_name': inv.company_name,
+        'company_address': inv.company_address,
+        'company_phone': inv.company_phone,
+        'company_email': inv.company_email,
         'created_at': inv.created_at.isoformat(),
+        'approved_at': inv.approved_at.isoformat() if inv.approved_at else None,
         'created_by': inv.created_by
     } for inv in invoices])
 
@@ -1184,6 +1264,7 @@ def get_invoices():
 @jwt_required()
 def create_invoice():
     current_user_id = int(get_jwt_identity())
+    current_user = User.query.get(current_user_id)
     data = request.get_json()
     
     # Verify stand exists and is approved
@@ -1191,25 +1272,38 @@ def create_invoice():
     if stand.status != 'approved':
         return jsonify({'error': 'Stand must be approved before creating invoice'}), 400
     
-    # Generate invoice number
+    # Generate devis number (will be converted to invoice number when approved)
     invoice_count = Invoice.query.count() + 1
-    invoice_number = f"INV-{datetime.now().year}-{invoice_count:04d}"
+    invoice_number = f"DEV-{datetime.now().year}-{invoice_count:04d}"
+    
+    # Get client info
+    client = None
+    if stand.client_id:
+        client = Client.query.get(stand.client_id)
     
     # Calculate totals
-    total_ht = data['total_ht']
+    total_ht = data.get('total_ht', stand.total_amount)
     tva_amount = total_ht * 0.19
     total_ttc = total_ht + tva_amount
     
     invoice = Invoice(
         invoice_number=invoice_number,
         stand_id=data['stand_id'],
-        client_name=data['client_name'],
-        client_email=data.get('client_email'),
-        client_phone=data.get('client_phone'),
-        client_address=data.get('client_address'),
+        client_id=stand.client_id,
+        client_name=client.name if client else data.get('client_name', 'Client'),
+        client_email=client.email if client else data.get('client_email'),
+        client_phone=client.phone if client else data.get('client_phone'),
+        client_address=client.address if client else data.get('client_address'),
+        client_company=client.company if client else data.get('client_company'),
         total_ht=total_ht,
         tva_amount=tva_amount,
         total_ttc=total_ttc,
+        status='devis',  # Start as devis
+        agent_name=current_user.name,
+        company_name=data.get('company_name', 'Votre Entreprise'),
+        company_address=data.get('company_address'),
+        company_phone=data.get('company_phone'),
+        company_email=data.get('company_email'),
         created_by=current_user_id
     )
     
@@ -1217,7 +1311,7 @@ def create_invoice():
     db.session.commit()
     
     return jsonify({
-        'message': 'Invoice created successfully',
+        'message': 'Devis created successfully',
         'invoice_id': invoice.id,
         'invoice_number': invoice_number
     }), 201
@@ -1229,12 +1323,24 @@ def update_invoice_status(invoice_id):
     data = request.get_json()
     
     if 'status' in data:
-        invoice.status = data['status']
+        old_status = invoice.status
+        new_status = data['status']
+        invoice.status = new_status
+        
+        # If converting devis to facture, update the number and set approval date
+        if old_status == 'devis' and new_status == 'facture':
+            # Change DEV to FAC in the number
+            invoice.invoice_number = invoice.invoice_number.replace('DEV-', 'FAC-')
+            invoice.approved_at = datetime.utcnow()
+        
         db.session.commit()
     
-    return jsonify({'message': 'Invoice updated successfully'})
+    return jsonify({
+        'message': 'Invoice updated successfully',
+        'invoice_number': invoice.invoice_number
+    })
 
-# Invoice PDF Generation
+# Invoice/Devis PDF Generation
 def generate_invoice_pdf(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
     stand = invoice.stand
@@ -1267,6 +1373,9 @@ def generate_invoice_pdf(invoice_id):
     # Content
     content = []
     
+    # Determine document type based on status
+    doc_type = "DEVIS" if invoice.status == 'devis' else "FACTURE"
+    
     # ===== HEADER SECTION =====
     # Logo and title
     logo_path = os.path.join(os.path.dirname(__file__), 'static', 'logo.png')
@@ -1279,15 +1388,15 @@ def generate_invoice_pdf(invoice_id):
             logo_title_data = [
                 [
                     logo,
-                    Paragraph('<b>FACTURE</b>', title_style)
+                    Paragraph(f'<b>{doc_type}</b>', title_style)
                 ]
             ]
         except Exception as e:
             print(f"✗ Error loading logo: {e}")
             logo_title_data = [
                 [
-                    Paragraph('<b>[LOGO]</b><br/><font size="7">EVENT MANAGEMENT</font>', styles['Normal']),
-                    Paragraph('<b>FACTURE</b>', title_style)
+                    Paragraph(f'<b>[LOGO]</b><br/><font size="7">{invoice.company_name or "EVENT MANAGEMENT"}</font>', styles['Normal']),
+                    Paragraph(f'<b>{doc_type}</b>', title_style)
                 ]
             ]
     else:
@@ -1310,9 +1419,10 @@ def generate_invoice_pdf(invoice_id):
     content.append(Spacer(1, 5))
     
     # ===== INVOICE INFO BOX =====
+    doc_type_label = "DEVIS N°" if invoice.status == 'devis' else "FACTURE N°"
     invoice_info_data = [
         [
-            Paragraph(f'<b>FACTURE N°: {invoice.invoice_number}</b> | <b>DATE:</b> {invoice.created_at.strftime("%d/%m/%Y")} | <b>STAND:</b> {stand.name}', styles['Normal']),
+            Paragraph(f'<b>{doc_type_label}: {invoice.invoice_number}</b> | <b>DATE:</b> {invoice.created_at.strftime("%d/%m/%Y")} | <b>STAND:</b> {stand.name}', styles['Normal']),
         ]
     ]
     
@@ -1337,22 +1447,51 @@ def generate_invoice_pdf(invoice_id):
             Paragraph('<b>CLIENT:</b>', styles['Normal'])
         ],
         [
-            Paragraph('Event Management Platform', styles['Normal']),
+            Paragraph(invoice.company_name or 'Event Management Platform', styles['Normal']),
             Paragraph(invoice.client_name, styles['Normal'])
-        ],
-        [
-            Paragraph('contact@eventmanagement.com', styles['Normal']),
-            Paragraph(invoice.client_email or 'N/A', styles['Normal'])
-        ],
-        [
-            Paragraph('Tél: +216 71 XXX XXX', styles['Normal']),
-            Paragraph(f'Tél: {invoice.client_phone or "N/A"}', styles['Normal'])
-        ],
-        [
-            Paragraph('123 Avenue de la République<br/>Tunis, 1000', styles['Normal']),
-            Paragraph(invoice.client_address or 'N/A', styles['Normal'])
         ]
     ]
+    
+    # Add company details
+    if invoice.company_email:
+        emetteur_client_data.append([
+            Paragraph(invoice.company_email, styles['Normal']),
+            Paragraph(invoice.client_email or 'N/A', styles['Normal'])
+        ])
+    else:
+        emetteur_client_data.append([
+            Paragraph('contact@eventmanagement.com', styles['Normal']),
+            Paragraph(invoice.client_email or 'N/A', styles['Normal'])
+        ])
+    
+    if invoice.company_phone:
+        emetteur_client_data.append([
+            Paragraph(f'Tél: {invoice.company_phone}', styles['Normal']),
+            Paragraph(f'Tél: {invoice.client_phone or "N/A"}', styles['Normal'])
+        ])
+    else:
+        emetteur_client_data.append([
+            Paragraph('Tél: +216 71 XXX XXX', styles['Normal']),
+            Paragraph(f'Tél: {invoice.client_phone or "N/A"}', styles['Normal'])
+        ])
+    
+    if invoice.company_address:
+        emetteur_client_data.append([
+            Paragraph(invoice.company_address, styles['Normal']),
+            Paragraph(invoice.client_address or 'N/A', styles['Normal'])
+        ])
+    else:
+        emetteur_client_data.append([
+            Paragraph('123 Avenue de la République<br/>Tunis, 1000', styles['Normal']),
+            Paragraph(invoice.client_address or 'N/A', styles['Normal'])
+        ])
+    
+    # Add agent information if available
+    if invoice.agent_name:
+        emetteur_client_data.append([
+            Paragraph(f'<b>Agent:</b> {invoice.agent_name}', styles['Normal']),
+            Paragraph(invoice.client_company or '', styles['Normal'])
+        ])
     
     emetteur_client_table = Table(emetteur_client_data, colWidths=[9*cm, 9*cm])
     emetteur_client_table.setStyle(TableStyle([
