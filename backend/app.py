@@ -34,6 +34,18 @@ jwt = JWTManager(app)
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
 CORS(app, resources={r"/*": {"origins": [FRONTEND_URL, "http://localhost:5173"]}})
 
+# Helper function to map role names (supports both English and French)
+def get_mapped_role(user_role):
+    """Map database role names to French role names for permission checks"""
+    role_mapping = {
+        'admin': 'Propriétaire',
+        'commercial': 'Commercial',
+        'logistics': 'Logistique',
+        'finance': 'Finance',
+        'visitor': 'Visiteur'
+    }
+    return role_mapping.get(user_role.lower(), user_role)
+
 # Models
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -571,8 +583,10 @@ def create_stand():
     current_user_id = int(get_jwt_identity())
     current_user = User.query.get(current_user_id)
     
+    user_role = get_mapped_role(current_user.role)
+    
     # Only Commercial and Propriétaire can create stands
-    if current_user.role not in ['Commercial', 'Propriétaire']:
+    if user_role not in ['Commercial', 'Propriétaire']:
         return jsonify({'message': 'Unauthorized'}), 403
     
     data = request.get_json()
@@ -609,8 +623,10 @@ def validate_logistics(stand_id):
     current_user_id = int(get_jwt_identity())
     current_user = User.query.get(current_user_id)
     
+    user_role = get_mapped_role(current_user.role)
+    
     # Only Logistique and Propriétaire can validate logistics
-    if current_user.role not in ['Logistique', 'Propriétaire']:
+    if user_role not in ['Logistique', 'Propriétaire']:
         return jsonify({'message': 'Unauthorized'}), 403
     
     stand = Stand.query.get_or_404(stand_id)
@@ -629,8 +645,10 @@ def validate_finance(stand_id):
     current_user_id = int(get_jwt_identity())
     current_user = User.query.get(current_user_id)
     
+    user_role = get_mapped_role(current_user.role)
+    
     # Only Finance and Propriétaire can validate finance
-    if current_user.role not in ['Finance', 'Propriétaire']:
+    if user_role not in ['Finance', 'Propriétaire']:
         return jsonify({'message': 'Unauthorized'}), 403
     
     stand = Stand.query.get_or_404(stand_id)
