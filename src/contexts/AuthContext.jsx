@@ -104,6 +104,7 @@ export const AuthProvider = ({ children }) => {
       'statistics': ['Propriétaire', 'Commercial', 'Finance', 'Visiteur'],
       'products': ['Propriétaire', 'Commercial', 'Logistique'],
       'suppliers': ['Propriétaire', 'Logistique'],
+      'clients': ['Propriétaire', 'Commercial'],
       'categories': ['Propriétaire'],
       'user-management': ['Propriétaire']
     }

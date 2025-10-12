@@ -91,6 +91,7 @@ Your application consists of:
    - **Database automatically initializes with sample data!** ✨
 
 6. **Verify Auto-Initialization**
+
    - Go to backend service → **Logs** tab
    - You should see initialization messages:
      ```
@@ -100,10 +101,10 @@ Your application consists of:
      ✅ Created 3 users, 4 suppliers, 5 categories, 17 products
      ```
    - Check the login credentials in the logs
-   - **Default login**: 
+   - **Default login**:
      - Email: `admin@event.com`
      - Password: `admin123`
-   
+
    **Note**: The database is now ready with sample data. No manual setup needed!
 
 ---

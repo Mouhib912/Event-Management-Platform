@@ -119,6 +119,15 @@ export default function Layout({ children }) {
       })
     }
 
+    // Clients
+    if (canAccess('clients')) {
+      items.push({ 
+        path: '/clients', 
+        label: 'Clients', 
+        icon: Users 
+      })
+    }
+
     // Categories - Owner only
     if (canAccess('categories')) {
       items.push({ 

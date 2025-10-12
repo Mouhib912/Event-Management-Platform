@@ -7,6 +7,7 @@ import Layout from './components/Layout'
 import Dashboard from './components/Dashboard'
 import Statistics from './components/Statistics'
 import Suppliers from './components/Suppliers'
+import Clients from './components/Clients'
 import Categories from './components/Categories'
 import Products from './components/Products'
 import StandSimulator from './components/StandSimulator'
@@ -48,6 +49,7 @@ function AppContent() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/statistics" element={<Statistics />} />
             <Route path="/suppliers" element={<Suppliers />} />
+            <Route path="/clients" element={<Clients />} />
             <Route path="/categories" element={<Categories />} />
             <Route path="/products" element={<Products />} />
             <Route path="/stand-simulator" element={<StandSimulator />} />

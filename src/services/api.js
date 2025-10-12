@@ -124,6 +124,31 @@ class ApiService {
     })
   }
 
+  // Clients
+  async getClients() {
+    return this.request('/clients')
+  }
+
+  async createClient(clientData) {
+    return this.request('/clients', {
+      method: 'POST',
+      body: JSON.stringify(clientData),
+    })
+  }
+
+  async updateClient(clientId, clientData) {
+    return this.request(`/clients/${clientId}`, {
+      method: 'PUT',
+      body: JSON.stringify(clientData),
+    })
+  }
+
+  async deleteClient(clientId) {
+    return this.request(`/clients/${clientId}`, {
+      method: 'DELETE',
+    })
+  }
+
   // Categories
   async getCategories() {
     return this.request('/categories')
