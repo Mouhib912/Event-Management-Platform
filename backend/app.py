@@ -61,7 +61,7 @@ class Category(db.Model):
     description = db.Column(db.Text)
     color = db.Column(db.String(20), default='#8884d8')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -73,7 +73,7 @@ class Product(db.Model):
     price = db.Column(db.Float, nullable=False)
     pricing_type = db.Column(db.String(20), nullable=False)  # 'Par Jour' or 'Forfait'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     
     category = db.relationship('Category', backref='products')
     supplier = db.relationship('Supplier', backref='products')
@@ -85,7 +85,7 @@ class Stand(db.Model):
     status = db.Column(db.String(20), default='draft')  # draft, validated_logistics, validated_finance, approved
     total_amount = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     validated_logistics_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     validated_finance_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     
@@ -112,7 +112,7 @@ class Purchase(db.Model):
     status = db.Column(db.String(20), default='pending')  # pending, approved, sent
     notes = db.Column(db.Text, nullable=True)  # Optional notes about the purchase
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     
     stand = db.relationship('Stand', backref='purchases')
     supplier = db.relationship('Supplier', backref='purchases')
@@ -143,7 +143,7 @@ class Invoice(db.Model):
     total_ttc = db.Column(db.Float, nullable=False)
     status = db.Column(db.String(20), default='pending')  # pending, paid, cancelled
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     
     stand = db.relationship('Stand', backref='invoices')
     creator = db.relationship('User', backref='created_invoices')
