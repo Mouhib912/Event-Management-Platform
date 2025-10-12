@@ -43,5 +43,10 @@ echo "🚀 Starting Gunicorn server..."
 echo "=========================================="
 echo ""
 
-# Start Gunicorn
-exec gunicorn -w 4 -b 0.0.0.0:$PORT app:app
+# Start Gunicorn with proper settings for Render
+# - Workers: 4 (handles multiple requests)
+# - Timeout: 120 seconds (prevents worker timeout during database operations)
+# - Keep-alive: 5 seconds (maintains connections)
+# - Bind to 0.0.0.0:$PORT (required by Render)
+# - Access log: - (stdout for Render logs)
+exec gunicorn -w 4 -b 0.0.0.0:$PORT --timeout 120 --keep-alive 5 --log-level info --access-logfile - app:app
