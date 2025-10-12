@@ -178,26 +178,18 @@ def init_database_with_samples():
             stands_data = [
                 {
                     'name': 'Stand Tech Innovators',
-                    'client_name': 'Tech Innovators SARL',
-                    'event_name': 'Tunisia Tech Summit 2025',
-                    'event_date': datetime(2025, 11, 15),
-                    'dimensions': '3x3m',
-                    'notes': 'Stand technologique avec démonstration interactive',
-                    'status': 'pending',
+                    'description': 'Stand 3x3m pour Tunisia Tech Summit 2025 - Client: Tech Innovators SARL',
+                    'status': 'draft',
+                    'total_amount': 0.0,
                     'created_by': admin.id
                 },
                 {
                     'name': 'Stand Fashion Week',
-                    'client_name': 'Elegance Boutique',
-                    'event_name': 'Tunisia Fashion Week',
-                    'event_date': datetime(2025, 12, 1),
-                    'dimensions': '4x4m',
-                    'notes': 'Stand de mode avec éclairage spécial',
-                    'status': 'approved',
-                    'logistics_validated': True,
-                    'logistics_validated_by': logistics.id,
-                    'logistics_validated_at': datetime.utcnow(),
-                    'created_by': admin.id
+                    'description': 'Stand 4x4m pour Tunisia Fashion Week - Client: Elegance Boutique',
+                    'status': 'validated_logistics',
+                    'total_amount': 0.0,
+                    'created_by': admin.id,
+                    'validated_logistics_by': logistics.id
                 }
             ]
             
