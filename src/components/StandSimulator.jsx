@@ -7,26 +7,33 @@ import { Badge } from './ui/badge'
 import { useAuth } from '../contexts/AuthContext'
 import apiService from '../services/api'
 import { Plus, Minus, Save, ShoppingCart } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 import toast from 'react-hot-toast'
 
 export default function StandSimulator() {
   const { user } = useAuth()
   const [standName, setStandName] = useState('')
+  const [clientId, setClientId] = useState('')
+  const [clients, setClients] = useState([])
   const [products, setProducts] = useState([])
   const [selectedProducts, setSelectedProducts] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadProducts()
+    loadData()
   }, [])
 
-  const loadProducts = async () => {
+  const loadData = async () => {
     try {
-      const productsData = await apiService.getProducts()
+      const [productsData, clientsData] = await Promise.all([
+        apiService.getProducts(),
+        apiService.getClients()
+      ])
       setProducts(productsData)
+      setClients(clientsData.filter(c => c.status === 'Actif'))
     } catch (error) {
-      console.error('Error loading products:', error)
-      toast.error('Erreur lors du chargement des produits')
+      console.error('Error loading data:', error)
+      toast.error('Erreur lors du chargement des données')
     } finally {
       setLoading(false)
     }
@@ -95,6 +102,11 @@ export default function StandSimulator() {
       return
     }
 
+    if (!clientId) {
+      toast.error('Veuillez sélectionner un client')
+      return
+    }
+
     if (selectedProducts.length === 0) {
       toast.error('Veuillez ajouter au moins un produit')
       return
@@ -103,6 +115,7 @@ export default function StandSimulator() {
     try {
       const standData = {
         name: standName,
+        client_id: parseInt(clientId),
         description: `Stand avec ${selectedProducts.length} produit(s)`,
         total_amount: calculateTotal(),
         items: selectedProducts.map(product => ({
@@ -119,6 +132,7 @@ export default function StandSimulator() {
       
       // Reset form
       setStandName('')
+      setClientId('')
       setSelectedProducts([])
     } catch (error) {
       console.error('Error saving stand:', error)
@@ -194,6 +208,22 @@ export default function StandSimulator() {
                   onChange={(e) => setStandName(e.target.value)}
                   placeholder="Saisissez le nom du stand"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="client">Client</Label>
+                <Select value={clientId} onValueChange={setClientId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionnez un client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map(client => (
+                      <SelectItem key={client.id} value={client.id.toString()}>
+                        {client.name} {client.company && `- ${client.company}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {selectedProducts.length > 0 && (
