@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => {
     preview: {
       port: parseInt(env.PORT) || 4173,
       host: '0.0.0.0',
-      allowedHosts: 'all', // Allow all hosts for Render deployment
+      allowedHosts: ['event-management-frontend-7awm.onrender.com'],
     },
     build: {
       outDir: 'dist',
