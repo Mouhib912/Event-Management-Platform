@@ -173,13 +173,15 @@ class Invoice(db.Model):
     remise = db.Column(db.Float, default=0)  # Discount amount or percentage
     remise_type = db.Column(db.String(20), default='percentage')  # 'percentage' or 'fixed'
     tva_percentage = db.Column(db.Float, default=19)  # Customizable TVA rate
+    # Product factor (multiplier for product prices: 1 or 1.5)
+    product_factor = db.Column(db.Float, default=1)  # Price multiplier: 1 or 1.5
     # Payment tracking
     advance_payment = db.Column(db.Float, default=0)  # Amount paid upfront when signing
     # Status: 'devis' (initial quote), 'facture' (approved/signed), 'paid', 'cancelled'
     status = db.Column(db.String(20), default='devis')
     # Agent who handled the devis/facture
     agent_name = db.Column(db.String(100))
-    # Company details
+    # Company details (kept for backward compatibility with existing PDFs)
     company_name = db.Column(db.String(200), default='Votre Entreprise')
     company_address = db.Column(db.Text)
     company_phone = db.Column(db.String(20))
@@ -1291,9 +1293,10 @@ def create_invoice():
     remise = float(data.get('remise', 0))
     remise_type = data.get('remise_type', 'percentage')
     tva_percentage = float(data.get('tva_percentage', 19))
+    product_factor = float(data.get('product_factor', 1))  # Get product factor (1 or 1.5)
     
-    # Calculate totals with remise
-    base_total = stand.total_amount
+    # Calculate totals with product factor and remise
+    base_total = stand.total_amount * product_factor  # Apply product factor first
     
     # Apply remise based on type
     if remise > 0:
@@ -1324,6 +1327,7 @@ def create_invoice():
         remise=remise,
         remise_type=remise_type,
         tva_percentage=tva_percentage,
+        product_factor=product_factor,
         status='devis',  # Start as devis
         agent_name=current_user.name,
         company_name=data.get('company_name', 'Votre Entreprise'),

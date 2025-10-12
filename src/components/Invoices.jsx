@@ -27,10 +27,7 @@ const Invoices = () => {
     remise: 0,
     remise_type: 'percentage',
     tva_percentage: 19,
-    company_name: '',
-    company_address: '',
-    company_phone: '',
-    company_email: ''
+    product_factor: 1
   });
 
   useEffect(() => {
@@ -91,10 +88,7 @@ const Invoices = () => {
         remise: 0,
         remise_type: 'percentage',
         tva_percentage: 19,
-        company_name: '',
-        company_address: '',
-        company_phone: '',
-        company_email: ''
+        product_factor: 1
       });
       
       loadData();
@@ -142,7 +136,7 @@ const Invoices = () => {
 
   const handleUpdateStatus = async (invoiceId, newStatus) => {
     try {
-      await apiService.updateInvoiceStatus(invoiceId, newStatus);
+      await apiService.updateInvoiceStatus(invoiceId, { status: newStatus });
       toast.success('Statut mis à jour!');
       loadData();
     } catch (error) {
@@ -317,56 +311,25 @@ const Invoices = () => {
                       placeholder="19"
                     />
                   </div>
-                </div>
-              </div>
 
-              <Separator />
-
-              {/* Company Details */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Informations de Votre Entreprise</h3>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2">
-                    <Label htmlFor="company_name">Nom de l'Entreprise</Label>
-                    <Input
-                      id="company_name"
-                      value={formData.company_name}
-                      onChange={(e) => handleInputChange('company_name', e.target.value)}
-                      placeholder="Votre Entreprise"
-                    />
-                  </div>
-
-                  <div className="col-span-2">
-                    <Label htmlFor="company_address">Adresse</Label>
-                    <Textarea
-                      id="company_address"
-                      value={formData.company_address}
-                      onChange={(e) => handleInputChange('company_address', e.target.value)}
-                      placeholder="Adresse de votre entreprise"
-                      rows={2}
-                    />
-                  </div>
-
+                  {/* Product Factor */}
                   <div>
-                    <Label htmlFor="company_phone">Téléphone</Label>
-                    <Input
-                      id="company_phone"
-                      value={formData.company_phone}
-                      onChange={(e) => handleInputChange('company_phone', e.target.value)}
-                      placeholder="+216 XX XXX XXX"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="company_email">Email</Label>
-                    <Input
-                      id="company_email"
-                      type="email"
-                      value={formData.company_email}
-                      onChange={(e) => handleInputChange('company_email', e.target.value)}
-                      placeholder="contact@entreprise.com"
-                    />
+                    <Label htmlFor="product_factor">Facteur Produit</Label>
+                    <Select
+                      value={formData.product_factor.toString()}
+                      onValueChange={(value) => handleInputChange('product_factor', parseFloat(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">x1 (Prix normal)</SelectItem>
+                        <SelectItem value="1.5">x1.5 (Prix majoré 50%)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Multiplie tous les prix des produits
+                    </p>
                   </div>
                 </div>
               </div>

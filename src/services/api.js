@@ -281,10 +281,10 @@ class ApiService {
     })
   }
 
-  async updateInvoiceStatus(invoiceId, status) {
+  async updateInvoiceStatus(invoiceId, data) {
     return this.request(`/invoices/${invoiceId}`, {
       method: 'PUT',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(data),
     })
   }
 
