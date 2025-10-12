@@ -59,9 +59,11 @@ Your application consists of:
    Branch: main
    Root Directory: backend
    Runtime: Python 3
-   Build Command: pip install -r requirements.txt
-   Start Command: gunicorn -w 4 -b 0.0.0.0:$PORT app:app
+   Build Command: pip install -r requirements.txt && chmod +x start.sh
+   Start Command: bash start.sh
    ```
+
+   **Note**: The `start.sh` script automatically initializes the database with sample data on first run!
 
 3. **Set Environment Variables**
    Click **"Advanced"** → **"Add Environment Variable"** and add:
@@ -86,18 +88,23 @@ Your application consists of:
    - Click **"Create Web Service"**
    - Wait for build and deploy (3-5 minutes)
    - Note your backend URL: `https://event-management-backend.onrender.com`
+   - **Database automatically initializes with sample data!** ✨
 
-6. **Initialize Database**
-   - After first deployment, your database will be empty
-   - Go to backend service → **Shell** tab
-   - Run:
-     ```bash
-     cd backend
-     python
-     >>> from app import db
-     >>> db.create_all()
-     >>> exit()
+6. **Verify Auto-Initialization**
+   - Go to backend service → **Logs** tab
+   - You should see initialization messages:
      ```
+     🚀 STARTING DATABASE INITIALIZATION
+     ✅ Database tables created successfully!
+     📦 Creating sample data...
+     ✅ Created 3 users, 4 suppliers, 5 categories, 17 products
+     ```
+   - Check the login credentials in the logs
+   - **Default login**: 
+     - Email: `admin@event.com`
+     - Password: `admin123`
+   
+   **Note**: The database is now ready with sample data. No manual setup needed!
 
 ---
 
