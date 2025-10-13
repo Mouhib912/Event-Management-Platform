@@ -24,7 +24,8 @@ export default function Suppliers() {
     contact_person: '',
     email: '',
     phone: '',
-    address: ''
+    address: '',
+    speciality: ''
   })
 
   // Load suppliers from backend
@@ -91,7 +92,8 @@ export default function Suppliers() {
       contact_person: supplier.contact_person || '',
       email: supplier.email || '',
       phone: supplier.phone || '',
-      address: supplier.address || ''
+      address: supplier.address || '',
+      speciality: supplier.speciality || ''
     })
     setIsDialogOpen(true)
   }
@@ -118,7 +120,8 @@ export default function Suppliers() {
       contact_person: '',
       email: '',
       phone: '',
-      address: ''
+      address: '',
+      speciality: ''
     })
     setEditingSupplier(null)
     setIsDialogOpen(false)
@@ -227,8 +230,8 @@ export default function Suppliers() {
                   <Button type="button" variant="outline" onClick={resetForm}>
                     Annuler
                   </Button>
-                  <Button type="submit">
-                    {editingSupplier ? 'Modifier' : 'Ajouter'}
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? 'Enregistrement...' : (editingSupplier ? 'Modifier' : 'Ajouter')}
                   </Button>
                 </div>
               </form>
