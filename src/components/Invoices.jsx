@@ -23,6 +23,7 @@ const Invoices = () => {
   const [advancePayment, setAdvancePayment] = useState(0);
   const [selectedClient, setSelectedClient] = useState(null);
   const [editClientInfo, setEditClientInfo] = useState(false);
+  const [editCompanyInfo, setEditCompanyInfo] = useState(false);
   const [selectedStandItems, setSelectedStandItems] = useState([]);
   const [formData, setFormData] = useState({
     stand_id: '',
@@ -31,6 +32,10 @@ const Invoices = () => {
     client_phone: '',
     client_address: '',
     client_company: '',
+    company_name: 'Votre Entreprise',
+    company_address: '',
+    company_phone: '',
+    company_email: '',
     remise: 0,
     remise_type: 'percentage',
     tva_percentage: 19,
@@ -169,6 +174,7 @@ const Invoices = () => {
       setDialogOpen(false);
       setSelectedClient(null);
       setEditClientInfo(false);
+      setEditCompanyInfo(false);
       setSelectedStandItems([]);
       setFormData({
         stand_id: '',
@@ -177,6 +183,10 @@ const Invoices = () => {
         client_phone: '',
         client_address: '',
         client_company: '',
+        company_name: 'Votre Entreprise',
+        company_address: '',
+        company_phone: '',
+        company_email: '',
         remise: 0,
         remise_type: 'percentage',
         tva_percentage: 19,
@@ -417,6 +427,96 @@ const Invoices = () => {
                   )}
                 </div>
               )}
+
+              <Separator />
+
+              {/* Company Information (Editable) */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-lg">Informations de Votre Entreprise</h3>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditCompanyInfo(!editCompanyInfo)}
+                  >
+                    {editCompanyInfo ? 'Masquer' : 'Modifier'}
+                  </Button>
+                </div>
+
+                {!editCompanyInfo ? (
+                  <Card className="bg-blue-50 border-blue-200">
+                    <CardContent className="pt-4 space-y-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Building2 className="h-4 w-4 text-blue-600" />
+                        <span className="font-medium">{formData.company_name}</span>
+                      </div>
+                      {formData.company_email && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Mail className="h-4 w-4 text-blue-600" />
+                          <span>{formData.company_email}</span>
+                        </div>
+                      )}
+                      {formData.company_phone && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Phone className="h-4 w-4 text-blue-600" />
+                          <span>{formData.company_phone}</span>
+                        </div>
+                      )}
+                      {formData.company_address && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <MapPin className="h-4 w-4 text-blue-600" />
+                          <span>{formData.company_address}</span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                      <Label htmlFor="company_name">Nom de l'Entreprise *</Label>
+                      <Input
+                        id="company_name"
+                        value={formData.company_name}
+                        onChange={(e) => handleInputChange('company_name', e.target.value)}
+                        placeholder="Nom de votre entreprise"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="company_email">Email Entreprise</Label>
+                      <Input
+                        id="company_email"
+                        type="email"
+                        value={formData.company_email}
+                        onChange={(e) => handleInputChange('company_email', e.target.value)}
+                        placeholder="contact@entreprise.com"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="company_phone">Téléphone Entreprise</Label>
+                      <Input
+                        id="company_phone"
+                        value={formData.company_phone}
+                        onChange={(e) => handleInputChange('company_phone', e.target.value)}
+                        placeholder="+216 XX XXX XXX"
+                      />
+                    </div>
+
+                    <div className="col-span-2">
+                      <Label htmlFor="company_address">Adresse Entreprise</Label>
+                      <Textarea
+                        id="company_address"
+                        value={formData.company_address}
+                        onChange={(e) => handleInputChange('company_address', e.target.value)}
+                        placeholder="Adresse complète de l'entreprise"
+                        rows={2}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <Separator />
 
