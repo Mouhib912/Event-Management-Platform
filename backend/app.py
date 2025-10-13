@@ -1312,15 +1312,16 @@ def create_invoice():
     tva_amount = total_ht * (tva_percentage / 100)
     total_ttc = total_ht + tva_amount
     
+    # Use provided client info from form, fallback to client from stand
     invoice = Invoice(
         invoice_number=invoice_number,
         stand_id=data['stand_id'],
         client_id=stand.client_id,
-        client_name=client.name if client else data.get('client_name', 'Client'),
-        client_email=client.email if client else data.get('client_email'),
-        client_phone=client.phone if client else data.get('client_phone'),
-        client_address=client.address if client else data.get('client_address'),
-        client_company=client.company if client else data.get('client_company'),
+        client_name=data.get('client_name') or (client.name if client else 'Client'),
+        client_email=data.get('client_email') or (client.email if client else ''),
+        client_phone=data.get('client_phone') or (client.phone if client else ''),
+        client_address=data.get('client_address') or (client.address if client else ''),
+        client_company=data.get('client_company') or (client.company if client else ''),
         total_ht=total_ht,
         tva_amount=tva_amount,
         total_ttc=total_ttc,

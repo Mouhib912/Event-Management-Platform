@@ -22,8 +22,14 @@ const Invoices = () => {
   const [selectedInvoiceForSigning, setSelectedInvoiceForSigning] = useState(null);
   const [advancePayment, setAdvancePayment] = useState(0);
   const [selectedClient, setSelectedClient] = useState(null);
+  const [editClientInfo, setEditClientInfo] = useState(false);
   const [formData, setFormData] = useState({
     stand_id: '',
+    client_name: '',
+    client_email: '',
+    client_phone: '',
+    client_address: '',
+    client_company: '',
     remise: 0,
     remise_type: 'percentage',
     tva_percentage: 19,
@@ -65,8 +71,25 @@ const Invoices = () => {
       const selectedStand = stands.find(s => s.id === parseInt(value));
       if (selectedStand && selectedStand.client) {
         setSelectedClient(selectedStand.client);
+        // Populate client fields from stand's client
+        setFormData(prev => ({
+          ...prev,
+          client_name: selectedStand.client.name || '',
+          client_email: selectedStand.client.email || '',
+          client_phone: selectedStand.client.phone || '',
+          client_address: selectedStand.client.address || '',
+          client_company: selectedStand.client.company || ''
+        }));
       } else {
         setSelectedClient(null);
+        setFormData(prev => ({
+          ...prev,
+          client_name: '',
+          client_email: '',
+          client_phone: '',
+          client_address: '',
+          client_company: ''
+        }));
       }
     }
   };
@@ -83,8 +106,14 @@ const Invoices = () => {
       
       setDialogOpen(false);
       setSelectedClient(null);
+      setEditClientInfo(false);
       setFormData({
         stand_id: '',
+        client_name: '',
+        client_email: '',
+        client_phone: '',
+        client_address: '',
+        client_company: '',
         remise: 0,
         remise_type: 'percentage',
         tva_percentage: 19,
@@ -220,43 +249,110 @@ const Invoices = () => {
                 )}
               </div>
 
-              {/* Client Info (Auto-populated) */}
+              {/* Client Info (Editable) */}
               {selectedClient && (
-                <Card className="bg-gray-50">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Informations Client</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <User className="h-4 w-4 text-gray-500" />
-                      <span className="font-medium">{selectedClient.name}</span>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-lg">Informations Client</h3>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEditClientInfo(!editClientInfo)}
+                    >
+                      {editClientInfo ? 'Masquer' : 'Modifier'}
+                    </Button>
+                  </div>
+
+                  {!editClientInfo ? (
+                    <Card className="bg-gray-50">
+                      <CardContent className="pt-4 space-y-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <User className="h-4 w-4 text-gray-500" />
+                          <span className="font-medium">{formData.client_name}</span>
+                        </div>
+                        {formData.client_company && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Building2 className="h-4 w-4 text-gray-500" />
+                            <span>{formData.client_company}</span>
+                          </div>
+                        )}
+                        {formData.client_email && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Mail className="h-4 w-4 text-gray-500" />
+                            <span>{formData.client_email}</span>
+                          </div>
+                        )}
+                        {formData.client_phone && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Phone className="h-4 w-4 text-gray-500" />
+                            <span>{formData.client_phone}</span>
+                          </div>
+                        )}
+                        {formData.client_address && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <MapPin className="h-4 w-4 text-gray-500" />
+                            <span>{formData.client_address}</span>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="col-span-2">
+                        <Label htmlFor="client_name">Nom du Client *</Label>
+                        <Input
+                          id="client_name"
+                          value={formData.client_name}
+                          onChange={(e) => handleInputChange('client_name', e.target.value)}
+                          placeholder="Nom complet"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="client_company">Société</Label>
+                        <Input
+                          id="client_company"
+                          value={formData.client_company}
+                          onChange={(e) => handleInputChange('client_company', e.target.value)}
+                          placeholder="Nom de la société"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="client_email">Email</Label>
+                        <Input
+                          id="client_email"
+                          type="email"
+                          value={formData.client_email}
+                          onChange={(e) => handleInputChange('client_email', e.target.value)}
+                          placeholder="email@example.com"
+                        />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="client_phone">Téléphone</Label>
+                        <Input
+                          id="client_phone"
+                          value={formData.client_phone}
+                          onChange={(e) => handleInputChange('client_phone', e.target.value)}
+                          placeholder="+216 XX XXX XXX"
+                        />
+                      </div>
+
+                      <div className="col-span-2">
+                        <Label htmlFor="client_address">Adresse</Label>
+                        <Textarea
+                          id="client_address"
+                          value={formData.client_address}
+                          onChange={(e) => handleInputChange('client_address', e.target.value)}
+                          placeholder="Adresse complète"
+                          rows={2}
+                        />
+                      </div>
                     </div>
-                    {selectedClient.company && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Building2 className="h-4 w-4 text-gray-500" />
-                        <span>{selectedClient.company}</span>
-                      </div>
-                    )}
-                    {selectedClient.email && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Mail className="h-4 w-4 text-gray-500" />
-                        <span>{selectedClient.email}</span>
-                      </div>
-                    )}
-                    {selectedClient.phone && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <Phone className="h-4 w-4 text-gray-500" />
-                        <span>{selectedClient.phone}</span>
-                      </div>
-                    )}
-                    {selectedClient.address && (
-                      <div className="flex items-center gap-2 text-sm">
-                        <MapPin className="h-4 w-4 text-gray-500" />
-                        <span>{selectedClient.address}</span>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                  )}
+                </div>
               )}
 
               <Separator />
@@ -467,6 +563,8 @@ const Invoices = () => {
                 <TableHead>Total HT</TableHead>
                 <TableHead>TVA</TableHead>
                 <TableHead>Total TTC</TableHead>
+                <TableHead>Payé</TableHead>
+                <TableHead>Restant</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -474,7 +572,7 @@ const Invoices = () => {
             <TableBody>
               {invoices.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center text-gray-500">
+                  <TableCell colSpan={11} className="text-center text-gray-500">
                     Aucune facture créée
                   </TableCell>
                 </TableRow>
@@ -495,6 +593,27 @@ const Invoices = () => {
                     <TableCell>{invoice.total_ht.toFixed(2)} TND</TableCell>
                     <TableCell>{invoice.tva_amount.toFixed(2)} TND</TableCell>
                     <TableCell className="font-bold">{invoice.total_ttc.toFixed(2)} TND</TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        <div className="font-medium text-green-600">
+                          {(invoice.advance_payment || 0).toFixed(2)} TND
+                        </div>
+                        {invoice.status === 'paid' && (
+                          <div className="text-xs text-gray-500">Soldé</div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {invoice.status === 'paid' ? (
+                          <div className="font-medium text-gray-400">0.00 TND</div>
+                        ) : (
+                          <div className="font-medium text-orange-600">
+                            {(invoice.total_ttc - (invoice.advance_payment || 0)).toFixed(2)} TND
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2 flex-wrap">
