@@ -63,6 +63,7 @@ class Supplier(db.Model):
     email = db.Column(db.String(120))
     phone = db.Column(db.String(20))
     address = db.Column(db.Text)
+    speciality = db.Column(db.String(200))  # Supplier's area of expertise
     status = db.Column(db.String(20), default='Actif')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
@@ -295,6 +296,7 @@ def get_suppliers():
             'email': s.email,
             'phone': s.phone,
             'address': s.address,
+            'speciality': s.speciality if hasattr(s, 'speciality') else None,
             'status': s.status if hasattr(s, 'status') else 'Actif',
             'created_at': s.created_at.isoformat() if s.created_at else None
         } for s in suppliers])
@@ -307,11 +309,6 @@ def get_suppliers():
 def create_supplier():
     try:
         current_user_id = int(get_jwt_identity())
-        current_user = User.query.get(current_user_id)
-        
-        # Only owners can create suppliers
-        if current_user.role != 'Propriétaire':
-            return jsonify({'message': 'Unauthorized'}), 403
         
         data = request.get_json()
         
@@ -321,6 +318,7 @@ def create_supplier():
             email=data.get('email'),
             phone=data.get('phone'),
             address=data.get('address'),
+            speciality=data.get('speciality'),
             status=data.get('status', 'Actif'),
             created_by=current_user_id
         )
@@ -338,13 +336,6 @@ def create_supplier():
 @jwt_required()
 def update_supplier(supplier_id):
     try:
-        current_user_id = int(get_jwt_identity())
-        current_user = User.query.get(current_user_id)
-        
-        # Only owners can update suppliers
-        if current_user.role != 'Propriétaire':
-            return jsonify({'message': 'Unauthorized'}), 403
-        
         supplier = Supplier.query.get_or_404(supplier_id)
         data = request.get_json()
         
@@ -353,6 +344,8 @@ def update_supplier(supplier_id):
         supplier.email = data.get('email', supplier.email)
         supplier.phone = data.get('phone', supplier.phone)
         supplier.address = data.get('address', supplier.address)
+        if 'speciality' in data:
+            supplier.speciality = data.get('speciality', supplier.speciality)
         if 'status' in data:
             supplier.status = data.get('status', supplier.status)
         
@@ -363,24 +356,20 @@ def update_supplier(supplier_id):
         db.session.rollback()
         print(f"Error in update_supplier: {str(e)}")
         return jsonify({'message': f'Error updating supplier: {str(e)}'}), 500
-    
-    return jsonify({'message': 'Supplier updated successfully'})
 
 @app.route('/api/suppliers/<int:supplier_id>', methods=['DELETE'])
 @jwt_required()
 def delete_supplier(supplier_id):
-    current_user_id = int(get_jwt_identity())
-    current_user = User.query.get(current_user_id)
-    
-    # Only owners can delete suppliers
-    if current_user.role != 'Propriétaire':
-        return jsonify({'message': 'Unauthorized'}), 403
-    
-    supplier = Supplier.query.get_or_404(supplier_id)
-    db.session.delete(supplier)
-    db.session.commit()
-    
-    return jsonify({'message': 'Supplier deleted successfully'})
+    try:
+        supplier = Supplier.query.get_or_404(supplier_id)
+        db.session.delete(supplier)
+        db.session.commit()
+        
+        return jsonify({'message': 'Supplier deleted successfully'})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error in delete_supplier: {str(e)}")
+        return jsonify({'message': f'Error deleting supplier: {str(e)}'}), 500
 
 # Client Routes
 @app.route('/api/clients', methods=['GET'])
