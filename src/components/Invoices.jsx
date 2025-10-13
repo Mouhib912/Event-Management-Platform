@@ -23,6 +23,7 @@ const Invoices = () => {
   const [advancePayment, setAdvancePayment] = useState(0);
   const [selectedClient, setSelectedClient] = useState(null);
   const [editClientInfo, setEditClientInfo] = useState(false);
+  const [selectedStandItems, setSelectedStandItems] = useState([]);
   const [formData, setFormData] = useState({
     stand_id: '',
     client_name: '',
@@ -66,7 +67,7 @@ const Invoices = () => {
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Auto-populate client info when stand is selected
+    // Auto-populate client info and load stand items when stand is selected
     if (field === 'stand_id') {
       const selectedStand = stands.find(s => s.id === parseInt(value));
       if (selectedStand && selectedStand.client) {
@@ -91,7 +92,62 @@ const Invoices = () => {
           client_company: ''
         }));
       }
+      
+      // Load stand items with editable properties
+      if (selectedStand && selectedStand.items) {
+        const editableItems = selectedStand.items.map(item => ({
+          id: item.id,
+          product_id: item.product_id,
+          product_name: item.product?.name || 'Produit',
+          quantity: item.quantity,
+          days: item.days || 1,
+          unit_price: item.unit_price,
+          factor: 1, // Default factor is 1
+          total_price: item.total_price
+        }));
+        setSelectedStandItems(editableItems);
+      } else {
+        setSelectedStandItems([]);
+      }
     }
+  };
+
+  const handleProductChange = (index, field, value) => {
+    setSelectedStandItems(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      
+      // Recalculate total price for this item
+      const item = updated[index];
+      updated[index].total_price = item.quantity * item.days * item.unit_price * item.factor;
+      
+      return updated;
+    });
+  };
+
+  const calculateTotal = () => {
+    const subtotal = selectedStandItems.reduce((sum, item) => sum + item.total_price, 0);
+    
+    // Apply remise
+    let totalHT = subtotal;
+    if (formData.remise > 0) {
+      if (formData.remise_type === 'percentage') {
+        totalHT = subtotal - (subtotal * formData.remise / 100);
+      } else {
+        totalHT = subtotal - formData.remise;
+      }
+    }
+    
+    // Apply TVA
+    const tvaAmount = totalHT * (formData.tva_percentage / 100);
+    const totalTTC = totalHT + tvaAmount;
+    
+    return {
+      subtotal: subtotal.toFixed(2),
+      totalHT: totalHT.toFixed(2),
+      tvaAmount: tvaAmount.toFixed(2),
+      totalTTC: totalTTC.toFixed(2)
+    };
   };
 
   const handleCreateInvoice = async () => {
@@ -101,12 +157,19 @@ const Invoices = () => {
         return;
       }
 
-      await apiService.createInvoice(formData);
+      // Include modified products in the invoice data
+      const invoiceData = {
+        ...formData,
+        modified_items: selectedStandItems
+      };
+
+      await apiService.createInvoice(invoiceData);
       toast.success('Devis créé avec succès!');
       
       setDialogOpen(false);
       setSelectedClient(null);
       setEditClientInfo(false);
+      setSelectedStandItems([]);
       setFormData({
         stand_id: '',
         client_name: '',
@@ -357,6 +420,116 @@ const Invoices = () => {
 
               <Separator />
 
+              {/* Products Section - Editable */}
+              {selectedStandItems.length > 0 && (
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Produits du Stand</h3>
+                  <p className="text-sm text-gray-600">
+                    Vous pouvez modifier la quantité, le prix unitaire et le facteur de chaque produit
+                  </p>
+                  
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Produit</TableHead>
+                          <TableHead className="w-24">Quantité</TableHead>
+                          <TableHead className="w-24">Jours</TableHead>
+                          <TableHead className="w-32">Prix Unit. (TND)</TableHead>
+                          <TableHead className="w-32">Facteur</TableHead>
+                          <TableHead className="text-right">Total (TND)</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedStandItems.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="font-medium">{item.product_name}</TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min="1"
+                                value={item.quantity}
+                                onChange={(e) => handleProductChange(index, 'quantity', parseInt(e.target.value) || 1)}
+                                className="w-20"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min="1"
+                                value={item.days}
+                                onChange={(e) => handleProductChange(index, 'days', parseInt(e.target.value) || 1)}
+                                className="w-20"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                value={item.unit_price}
+                                onChange={(e) => handleProductChange(index, 'unit_price', parseFloat(e.target.value) || 0)}
+                                className="w-28"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={item.factor.toString()}
+                                onValueChange={(value) => handleProductChange(index, 'factor', parseFloat(value))}
+                              >
+                                <SelectTrigger className="w-28">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="1">x1</SelectItem>
+                                  <SelectItem value="1.5">x1.5</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell className="text-right font-semibold">
+                              {item.total_price.toFixed(2)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Total Summary */}
+                  <Card className="bg-blue-50 border-blue-200">
+                    <CardContent className="pt-4">
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Sous-total:</span>
+                          <span className="font-semibold">{calculateTotal().subtotal} TND</span>
+                        </div>
+                        {formData.remise > 0 && (
+                          <div className="flex justify-between text-sm text-green-600">
+                            <span>Remise ({formData.remise_type === 'percentage' ? `${formData.remise}%` : `${formData.remise} TND`}):</span>
+                            <span className="font-semibold">-{(calculateTotal().subtotal - calculateTotal().totalHT).toFixed(2)} TND</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-sm">
+                          <span>Total HT:</span>
+                          <span className="font-semibold">{calculateTotal().totalHT} TND</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>TVA ({formData.tva_percentage}%):</span>
+                          <span className="font-semibold">{calculateTotal().tvaAmount} TND</span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between text-lg font-bold text-blue-700">
+                          <span>Total TTC:</span>
+                          <span>{calculateTotal().totalTTC} TND</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              <Separator />
+
               {/* Invoice Details */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg">Détails du Devis</h3>
@@ -407,26 +580,6 @@ const Invoices = () => {
                       placeholder="19"
                     />
                   </div>
-
-                  {/* Product Factor */}
-                  <div>
-                    <Label htmlFor="product_factor">Facteur Produit</Label>
-                    <Select
-                      value={formData.product_factor.toString()}
-                      onValueChange={(value) => handleInputChange('product_factor', parseFloat(value))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">x1 (Prix normal)</SelectItem>
-                        <SelectItem value="1.5">x1.5 (Prix majoré 50%)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Multiplie tous les prix des produits
-                    </p>
-                  </div>
                 </div>
               </div>
 
@@ -434,7 +587,7 @@ const Invoices = () => {
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>
                   Annuler
                 </Button>
-                <Button onClick={handleCreateInvoice}>
+                <Button onClick={handleCreateInvoice} disabled={selectedStandItems.length === 0}>
                   Créer le Devis
                 </Button>
               </div>
@@ -464,9 +617,10 @@ const Invoices = () => {
                     <span className="text-sm font-medium">Client:</span>
                     <span className="text-sm">{selectedInvoiceForSigning.client_name}</span>
                   </div>
+                  <Separator className="my-2" />
                   <div className="flex justify-between">
                     <span className="text-sm font-medium">Total TTC:</span>
-                    <span className="text-sm font-bold">{selectedInvoiceForSigning.total_ttc.toFixed(2)} TND</span>
+                    <span className="text-sm font-bold text-blue-600">{selectedInvoiceForSigning.total_ttc.toFixed(2)} TND</span>
                   </div>
                 </div>
               )}
@@ -480,6 +634,7 @@ const Invoices = () => {
                     type="number"
                     step="0.01"
                     min="0"
+                    max={selectedInvoiceForSigning?.total_ttc || 0}
                     value={advancePayment}
                     onChange={(e) => setAdvancePayment(parseFloat(e.target.value) || 0)}
                     placeholder="0.00"
@@ -490,6 +645,27 @@ const Invoices = () => {
                   Montant versé en acompte par le client
                 </p>
               </div>
+
+              {/* Payment Breakdown */}
+              {selectedInvoiceForSigning && advancePayment > 0 && (
+                <Card className="bg-gradient-to-br from-green-50 to-orange-50 border-2">
+                  <CardContent className="pt-4">
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">💰 Acompte Payé:</span>
+                        <span className="text-lg font-bold text-green-600">{advancePayment.toFixed(2)} TND</span>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">⏳ Reste à Payer:</span>
+                        <span className="text-lg font-bold text-orange-600">
+                          {(selectedInvoiceForSigning.total_ttc - advancePayment).toFixed(2)} TND
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setSigningDialogOpen(false)}>

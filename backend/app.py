@@ -196,6 +196,21 @@ class Invoice(db.Model):
     client = db.relationship('Client', backref='invoices')
     creator = db.relationship('User', backref='created_invoices')
 
+class InvoiceItem(db.Model):
+    """Store modified product details for each invoice"""
+    id = db.Column(db.Integer, primary_key=True)
+    invoice_id = db.Column(db.Integer, db.ForeignKey('invoice.id'), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    product_name = db.Column(db.String(200), nullable=False)  # Store name for historical reference
+    quantity = db.Column(db.Integer, nullable=False)
+    days = db.Column(db.Integer, default=1)
+    unit_price = db.Column(db.Float, nullable=False)
+    factor = db.Column(db.Float, default=1)  # Individual product factor (1 or 1.5)
+    total_price = db.Column(db.Float, nullable=False)
+    
+    invoice = db.relationship('Invoice', backref='items')
+    product = db.relationship('Product', backref='invoice_items')
+
 # Health Check Route for Render
 @app.route('/api/health', methods=['GET'])
 def health_check():
@@ -1282,20 +1297,28 @@ def create_invoice():
     remise = float(data.get('remise', 0))
     remise_type = data.get('remise_type', 'percentage')
     tva_percentage = float(data.get('tva_percentage', 19))
-    product_factor = float(data.get('product_factor', 1))  # Get product factor (1 or 1.5)
     
-    # Calculate totals with product factor and remise
-    base_total = stand.total_amount * product_factor  # Apply product factor first
+    # Get modified items from frontend (includes individual factors per product)
+    modified_items = data.get('modified_items', [])
+    
+    # Calculate totals from modified items
+    if modified_items:
+        # Use the modified items with individual factors
+        subtotal = sum(item['total_price'] for item in modified_items)
+    else:
+        # Fallback to original stand total with global factor (backward compatibility)
+        product_factor = float(data.get('product_factor', 1))
+        subtotal = stand.total_amount * product_factor
     
     # Apply remise based on type
     if remise > 0:
         if remise_type == 'percentage':
-            remise_amount = base_total * (remise / 100)
+            remise_amount = subtotal * (remise / 100)
         else:  # fixed
             remise_amount = remise
-        total_ht = base_total - remise_amount
+        total_ht = subtotal - remise_amount
     else:
-        total_ht = base_total
+        total_ht = subtotal
     
     # Calculate TVA with custom percentage
     tva_amount = total_ht * (tva_percentage / 100)
@@ -1317,7 +1340,7 @@ def create_invoice():
         remise=remise,
         remise_type=remise_type,
         tva_percentage=tva_percentage,
-        product_factor=product_factor,
+        product_factor=data.get('product_factor', 1),  # Keep for backward compatibility
         status='devis',  # Start as devis
         agent_name=current_user.name,
         company_name=data.get('company_name', 'Votre Entreprise'),
@@ -1328,6 +1351,24 @@ def create_invoice():
     )
     
     db.session.add(invoice)
+    db.session.flush()  # Get the invoice ID
+    
+    # Save modified items to InvoiceItem table
+    if modified_items:
+        for item in modified_items:
+            product = Product.query.get(item.get('product_id'))
+            invoice_item = InvoiceItem(
+                invoice_id=invoice.id,
+                product_id=item.get('product_id'),
+                product_name=item.get('product_name', product.name if product else 'Produit'),
+                quantity=item.get('quantity', 1),
+                days=item.get('days', 1),
+                unit_price=item.get('unit_price', 0),
+                factor=item.get('factor', 1),
+                total_price=item.get('total_price', 0)
+            )
+            db.session.add(invoice_item)
+    
     db.session.commit()
     
     return jsonify({
