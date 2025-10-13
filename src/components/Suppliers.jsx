@@ -8,11 +8,9 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Plus, Edit, Trash2, Search, Phone, Mail, MapPin } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { useAuth } from '@/contexts/AuthContext'
 import apiService from '@/services/api'
 
 export default function Suppliers() {
-  const { user } = useAuth()
   const [suppliers, setSuppliers] = useState([])
   const [isLoading, setIsLoading] = useState(false)
 
@@ -47,8 +45,8 @@ export default function Suppliers() {
     }
   }
 
-  // Only Propriétaire and Logistique can edit suppliers
-  const canEdit = user?.role && ['Propriétaire', 'Logistique'].includes(user.role)
+  // Allow all authenticated users to edit suppliers
+  const canEdit = true
 
   const filteredSuppliers = suppliers.filter(supplier =>
     supplier.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
