@@ -34,8 +34,13 @@ export default function Suppliers() {
   const loadSuppliers = async () => {
     try {
       setIsLoading(true)
-      const data = await apiService.getSuppliers()
-      setSuppliers(data || [])
+      // Load from Contacts API with fournisseur filter
+      const data = await apiService.getContacts('fournisseur')
+      // Filter to ensure we only get fournisseur or both types
+      const supplierData = data.filter(c => 
+        c.contact_type === 'fournisseur' || c.contact_type === 'both'
+      )
+      setSuppliers(supplierData || [])
     } catch (error) {
       console.error('Error loading suppliers:', error)
       toast.error('Erreur lors du chargement des fournisseurs')

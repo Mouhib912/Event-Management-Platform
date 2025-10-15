@@ -33,13 +33,16 @@ export default function StandSimulator() {
 
   const loadData = async () => {
     try {
-      const [productsData, clientsData, categoriesData] = await Promise.all([
+      const [productsData, contactsData, categoriesData] = await Promise.all([
         apiService.getProducts(),
-        apiService.getClients(),
+        apiService.getContacts('client'), // Get contacts of type 'client' or 'both'
         apiService.getCategories()
       ])
       setProducts(productsData)
-      setClients(clientsData.filter(c => c.status === 'Actif'))
+      // Filter active contacts that are clients or both
+      setClients(contactsData.filter(c => 
+        c.status === 'Actif' && (c.contact_type === 'client' || c.contact_type === 'both')
+      ))
       setCategories(categoriesData)
     } catch (error) {
       console.error('Error loading data:', error)

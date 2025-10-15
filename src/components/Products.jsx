@@ -59,8 +59,12 @@ export default function Products() {
       const productsData = await apiService.getProducts()
       setProducts(productsData || [])
       
-      // Load suppliers
-      const suppliersData = await apiService.getSuppliers()
+      // Load suppliers from Contacts (fournisseur or both types)
+      const contactsData = await apiService.getContacts('fournisseur')
+      // Filter to get suppliers only (fournisseur or both)
+      const suppliersData = contactsData.filter(c => 
+        c.contact_type === 'fournisseur' || c.contact_type === 'both'
+      )
       setSuppliers(suppliersData || [])
       
       // Load categories

@@ -38,8 +38,13 @@ export default function Clients() {
 
   const fetchClients = async () => {
     try {
-      const data = await apiService.getClients()
-      setClients(data)
+      // Load from Contacts API with client filter
+      const data = await apiService.getContacts('client')
+      // Filter to ensure we only get client or both types
+      const clientData = data.filter(c => 
+        c.contact_type === 'client' || c.contact_type === 'both'
+      )
+      setClients(clientData)
     } catch (error) {
       toast.error('Erreur lors du chargement des clients')
     } finally {
