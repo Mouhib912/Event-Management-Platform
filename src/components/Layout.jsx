@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { 
   DropdownMenu, 
@@ -139,15 +140,18 @@ export default function Layout({ children }) {
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
-        <div className="flex items-center justify-between h-16 px-6 border-b">
-          <h1 className="text-xl font-bold text-gray-900">Gestion Événementielle</h1>
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-indigo-600 via-purple-600 to-purple-700 shadow-2xl transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+        <div className="flex items-center justify-between h-16 px-6 border-b border-white/20">
+          <h1 className="text-xl font-bold text-white flex items-center gap-2">
+            <Hammer className="h-6 w-6" />
+            Gestion Événementielle
+          </h1>
           <Button
             variant="ghost"
             size="sm"
-            className="lg:hidden"
+            className="lg:hidden text-white hover:bg-white/20"
             onClick={() => setSidebarOpen(false)}
           >
             <X className="h-6 w-6" />
@@ -160,10 +164,10 @@ export default function Layout({ children }) {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
                   isActive(item.path)
-                    ? 'bg-blue-100 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-white text-purple-700 shadow-lg'
+                    : 'text-white/90 hover:bg-white/10 hover:text-white'
                 }`}
                 onClick={() => setSidebarOpen(false)}
               >
@@ -178,7 +182,7 @@ export default function Layout({ children }) {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden lg:ml-0">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b">
+        <header className="bg-white/80 backdrop-blur-lg shadow-sm border-b border-gray-200/50">
           <div className="flex items-center justify-between h-16 px-6">
             <div className="flex items-center">
               <Button
@@ -189,13 +193,17 @@ export default function Layout({ children }) {
               >
                 <Menu className="h-6 w-6" />
               </Button>
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                 {navigationItems.find(item => isActive(item.path))?.label || 'Tableau de Bord'}
               </h2>
             </div>
             
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">{getRoleDisplayName(user?.role)}</span>
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-100 to-blue-100 rounded-full">
+                <Badge variant="secondary" className="bg-white/50">
+                  {getRoleDisplayName(user?.role)}
+                </Badge>
+              </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">

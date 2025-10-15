@@ -671,42 +671,45 @@ export default function Products() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {categoryProducts.map(product => (
-                      <div key={product.id} className="border rounded-lg p-4 space-y-2 hover:shadow-md transition-shadow">
+                      <div key={product.id} className="group border-2 border-gray-100 rounded-2xl p-5 space-y-3 hover:shadow-xl hover:border-purple-200 transition-all duration-300 hover:scale-105 bg-gradient-to-br from-white to-gray-50 card-hover">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h4 className="font-semibold">{product.name}</h4>
-                            <p className="text-sm text-muted-foreground line-clamp-2">
+                            <h4 className="font-bold text-lg text-gray-900 group-hover:text-purple-600 transition-colors">{product.name}</h4>
+                            <p className="text-sm text-gray-600 line-clamp-2 mt-1">
                               {product.description || 'Pas de description'}
                             </p>
                           </div>
                           {canEdit && (
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                className="hover:bg-purple-100"
                                 onClick={() => handleEdit(product)}
                               >
-                                <Edit className="h-3 w-3" />
+                                <Edit className="h-4 w-4 text-purple-600" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                className="hover:bg-red-100"
                                 onClick={() => handleDelete(product.id)}
                               >
-                                <Trash2 className="h-3 w-3 text-red-500" />
+                                <Trash2 className="h-4 w-4 text-red-500" />
                               </Button>
                             </div>
                           )}
                         </div>
-                        <div className="flex items-center justify-between pt-2 border-t">
-                          <Badge variant={product.pricing_type === 'Par Jour' ? 'default' : 'outline'}>
+                        <div className="flex items-center justify-between pt-3 border-t-2 border-gray-100">
+                          <Badge variant={product.pricing_type === 'Par Jour' ? 'default' : 'outline'} className="shadow-sm">
                             {product.pricing_type}
                           </Badge>
-                          <p className="text-lg font-bold text-primary">
+                          <p className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
                             {product.price?.toFixed(2)} TND
                           </p>
                         </div>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-gray-500 flex items-center gap-2 pt-1">
+                          <Package className="h-3 w-3" />
                           {product.supplier_name} • {product.unit}
                         </p>
                       </div>

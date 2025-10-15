@@ -350,78 +350,97 @@ const Contacts = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50 card-hover">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500 flex items-center gap-2">
-              <Users className="h-4 w-4" />
+            <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <Users className="h-5 w-5 text-purple-600" />
+              </div>
               Total Contacts
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">{stats.total}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-white card-hover">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-blue-600 flex items-center gap-2">
-              <User className="h-4 w-4" />
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <User className="h-5 w-5 text-blue-600" />
+              </div>
               Clients
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{stats.clients}</div>
+            <div className="text-3xl font-bold text-blue-600">{stats.clients}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-orange-50 to-white card-hover">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-orange-600 flex items-center gap-2">
-              <ShoppingBag className="h-4 w-4" />
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <ShoppingBag className="h-5 w-5 text-orange-600" />
+              </div>
               Fournisseurs
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-600">{stats.fournisseurs}</div>
+            <div className="text-3xl font-bold text-orange-600">{stats.fournisseurs}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-white card-hover">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-green-600 flex items-center gap-2">
-              <RefreshCcw className="h-4 w-4" />
+              <div className="p-2 bg-green-100 rounded-lg">
+                <RefreshCcw className="h-5 w-5 text-green-600" />
+              </div>
               Les Deux
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.both}</div>
+            <div className="text-3xl font-bold text-green-600">{stats.both}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Search and Filters */}
-      <Card>
+      <Card className="border-0 shadow-lg">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Liste des Contacts</CardTitle>
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Users className="h-6 w-6 text-purple-600" />
+              Liste des Contacts
+            </CardTitle>
             <div className="relative w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Rechercher..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 border-2 focus:border-purple-400"
               />
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="all">Tous ({stats.total})</TabsTrigger>
-              <TabsTrigger value="client">Clients ({stats.clients})</TabsTrigger>
-              <TabsTrigger value="fournisseur">Fournisseurs ({stats.fournisseurs})</TabsTrigger>
-              <TabsTrigger value="both">Les Deux ({stats.both})</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4 p-1 bg-gradient-to-r from-purple-50 to-blue-50">
+              <TabsTrigger value="all" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
+                Tous ({stats.total})
+              </TabsTrigger>
+              <TabsTrigger value="client" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
+                Clients ({stats.clients})
+              </TabsTrigger>
+              <TabsTrigger value="fournisseur" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
+                Fournisseurs ({stats.fournisseurs})
+              </TabsTrigger>
+              <TabsTrigger value="both" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
+                Les Deux ({stats.both})
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value={activeTab} className="mt-6">
@@ -433,11 +452,11 @@ const Contacts = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredContacts.map(contact => (
-                    <Card key={contact.id} className="hover:shadow-md transition-shadow">
+                    <Card key={contact.id} className="group border-2 border-gray-100 hover:border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-white to-gray-50">
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <CardTitle className="text-lg">{contact.name}</CardTitle>
+                            <CardTitle className="text-lg font-bold group-hover:text-purple-600 transition-colors">{contact.name}</CardTitle>
                             {contact.company && (
                               <CardDescription className="flex items-center gap-1 mt-1">
                                 <Building2 className="h-3 w-3" />
@@ -445,7 +464,7 @@ const Contacts = () => {
                               </CardDescription>
                             )}
                           </div>
-                          <div className="flex gap-1">
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button
                               size="sm"
                               variant="ghost"

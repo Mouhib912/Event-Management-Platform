@@ -125,15 +125,25 @@ export default function Dashboard() {
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
-        <h1 className="text-2xl font-bold mb-2">
-          Bienvenue, {user?.name || 'Utilisateur'}
-        </h1>
-        <p className="text-blue-100">
-          Connecté en tant que {user?.role || 'Utilisateur'} • Tableau de bord principal
-        </p>
+      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-purple-700 rounded-2xl p-8 text-white shadow-2xl fade-in">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
+              <Calendar className="h-8 w-8" />
+              Bienvenue, {user?.name || 'Utilisateur'}
+            </h1>
+            <p className="text-purple-100 text-lg">
+              Connecté en tant que {user?.role || 'Utilisateur'} • Tableau de bord principal
+            </p>
+          </div>
+          <div className="hidden md:block">
+            <div className="bg-white/20 backdrop-blur-sm rounded-full p-4">
+              <BarChart3 className="h-12 w-12 text-white" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -141,22 +151,37 @@ export default function Dashboard() {
         {stats.map((stat, index) => {
           const Icon = stat.icon
           return (
-            <Card key={index}>
+            <Card key={index} className="card-hover border-0 shadow-lg bg-white/80 backdrop-blur-sm slide-in" style={{animationDelay: `${index * 0.1}s`}}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
+                <CardTitle className="text-sm font-medium text-gray-600">
                   {stat.title}
                 </CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
+                <div className={`p-2 rounded-lg ${
+                  index === 0 ? 'bg-blue-100' :
+                  index === 1 ? 'bg-green-100' :
+                  index === 2 ? 'bg-purple-100' :
+                  'bg-orange-100'
+                }`}>
+                  <Icon className={`h-5 w-5 ${
+                    index === 0 ? 'text-blue-600' :
+                    index === 1 ? 'text-green-600' :
+                    index === 2 ? 'text-purple-600' :
+                    'text-orange-600'
+                  }`} />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                    stat.changeType === 'positive' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                <div className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+                  {stat.value}
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-600">{stat.description}</span>
+                  <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                    stat.changeType === 'positive' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
                   }`}>
+                    <TrendingUp className="h-3 w-3 mr-1" />
                     {stat.change}
                   </span>
-                  <span>{stat.description}</span>
                 </div>
               </CardContent>
             </Card>
@@ -166,9 +191,12 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Actions */}
-        <Card>
+        <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>Actions Rapides</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Hammer className="h-5 w-5 text-purple-600" />
+              Actions Rapides
+            </CardTitle>
             <CardDescription>
               Accès direct aux fonctionnalités principales
             </CardDescription>
@@ -181,13 +209,13 @@ export default function Dashboard() {
                   <a
                     key={index}
                     href={action.href}
-                    className="flex flex-col items-center p-4 rounded-lg border hover:bg-accent transition-colors"
+                    className="group flex flex-col items-center p-5 rounded-xl border-2 border-gray-100 hover:border-purple-200 hover:shadow-lg transition-all duration-300 hover:scale-105 bg-gradient-to-br from-white to-gray-50"
                   >
-                    <div className={`p-3 rounded-full ${action.color} text-white mb-2`}>
-                      <Icon className="h-6 w-6" />
+                    <div className={`p-4 rounded-2xl ${action.color} text-white mb-3 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                      <Icon className="h-7 w-7" />
                     </div>
-                    <h3 className="font-medium text-sm text-center">{action.title}</h3>
-                    <p className="text-xs text-muted-foreground text-center mt-1">
+                    <h3 className="font-semibold text-sm text-center text-gray-900">{action.title}</h3>
+                    <p className="text-xs text-gray-500 text-center mt-1">
                       {action.description}
                     </p>
                   </a>
@@ -198,28 +226,32 @@ export default function Dashboard() {
         </Card>
 
         {/* Recent Activities */}
-        <Card>
+        <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle>Activités Récentes</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Calendar className="h-5 w-5 text-purple-600" />
+              Activités Récentes
+            </CardTitle>
             <CardDescription>
               Dernières actions sur la plateforme
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start space-x-3">
-                  <Badge className={getStatusColor(activity.status)}>
+                <div key={activity.id} className="flex items-start space-x-3 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-purple-50 hover:to-blue-50 transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:shadow-md">
+                  <Badge className={`${getStatusColor(activity.status)} shrink-0 mt-0.5 shadow-sm`}>
                     {activity.status}
                   </Badge>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground">
+                    <p className="text-sm font-semibold text-gray-900">
                       {activity.title}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-gray-600 mt-0.5">
                       {activity.description}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
                       {activity.time}
                     </p>
                   </div>
