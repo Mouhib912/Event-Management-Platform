@@ -111,30 +111,12 @@ export default function Layout({ children }) {
       })
     }
 
-    // Contacts (unified view)
+    // Contacts (unified view - replaces Suppliers and Clients)
     if (canAccess('suppliers') || canAccess('clients')) {
       items.push({ 
         path: '/contacts', 
         label: 'Contacts', 
         icon: ContactRound 
-      })
-    }
-
-    // Suppliers
-    if (canAccess('suppliers')) {
-      items.push({ 
-        path: '/suppliers', 
-        label: 'Fournisseurs', 
-        icon: Building2 
-      })
-    }
-
-    // Clients
-    if (canAccess('clients')) {
-      items.push({ 
-        path: '/clients', 
-        label: 'Clients', 
-        icon: Users 
       })
     }
 

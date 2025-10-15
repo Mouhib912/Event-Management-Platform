@@ -3,66 +3,81 @@
 ## ✅ Issues Fixed
 
 ### 1. **Backend Connection Issue** ✅
+
 **Problem**: Backend server wasn't running, causing "Failed to fetch" errors  
-**Solution**: 
+**Solution**:
+
 - Backend server now running on `http://localhost:5000`
 - Frontend running on `http://localhost:5173`
 - Created `start-servers.bat` for easy startup
 
 ### 2. **Stand Creation Errors** ✅
+
 **Problem**: Stand simulator wasn't fetching clients from the new Contacts API  
 **Solution**: Updated `StandSimulator.jsx`
+
 ```javascript
 // OLD CODE:
-apiService.getClients()
+apiService.getClients();
 
 // NEW CODE:
-apiService.getContacts('client')  // Fetches contacts of type 'client' or 'both'
+apiService.getContacts('client'); // Fetches contacts of type 'client' or 'both'
 ```
 
 ### 3. **Product Creation Errors** ✅
+
 **Problem**: Products page wasn't fetching suppliers from Contacts API  
 **Solution**: Updated `Products.jsx`
+
 ```javascript
 // OLD CODE:
-apiService.getSuppliers()
+apiService.getSuppliers();
 
 // NEW CODE:
-apiService.getContacts('fournisseur')  // Fetches suppliers from Contacts
+apiService.getContacts('fournisseur'); // Fetches suppliers from Contacts
 ```
 
 ### 4. **Suppliers Page Not Using Contacts** ✅
+
 **Problem**: Suppliers page still using old API endpoint  
 **Solution**: Updated `Suppliers.jsx`
+
 ```javascript
 // Now fetches from Contacts API with fournisseur filter
-const data = await apiService.getContacts('fournisseur')
+const data = await apiService.getContacts('fournisseur');
 ```
 
 ### 5. **Clients Page Not Using Contacts** ✅
+
 **Problem**: Clients page still using old API endpoint  
 **Solution**: Updated `Clients.jsx`
+
 ```javascript
 // Now fetches from Contacts API with client filter
-const data = await apiService.getContacts('client')
+const data = await apiService.getContacts('client');
 ```
 
 ## 📋 What Changed
 
 ### Files Modified:
+
 1. **src/components/StandSimulator.jsx**
+
    - Changed `getClients()` to `getContacts('client')`
    - Filters for contacts with type='client' or type='both'
 
 2. **src/components/Products.jsx**
+
    - Changed `getSuppliers()` to `getContacts('fournisseur')`
    - Filters for contacts with type='fournisseur' or type='both'
 
 3. **src/components/Suppliers.jsx**
+
    - Changed `getSuppliers()` to `getContacts('fournisseur')`
    - Now displays suppliers from unified Contacts table
 
 4. **src/components/Clients.jsx**
+
    - Changed `getClients()` to `getContacts('client')`
    - Now displays clients from unified Contacts table
 
@@ -73,28 +88,32 @@ const data = await apiService.getContacts('client')
 ## 🚀 How to Start the Application
 
 ### Option 1: Use the Batch File (Easiest)
+
 ```bash
 # Double-click or run:
 start-servers.bat
 ```
 
 ### Option 2: Manual Start
+
 ```bash
 # Terminal 1 - Backend
 C:/Users/mouhib/Downloads/event-management-platform/.venv/Scripts/python.exe backend/app.py
 
-# Terminal 2 - Frontend  
+# Terminal 2 - Frontend
 npm run dev
 ```
 
 ## ✅ Testing Checklist
 
 ### Test 1: Login
+
 - [ ] Go to http://localhost:5173
 - [ ] Login with admin@event.com / admin123
 - [ ] Should see Dashboard
 
 ### Test 2: Contacts Page
+
 - [ ] Click "Contacts" in sidebar
 - [ ] Should see sample contacts
 - [ ] Try filtering: All, Clients, Fournisseurs, Both
@@ -102,6 +121,7 @@ npm run dev
 - [ ] Edit an existing contact
 
 ### Test 3: Stand Creation
+
 - [ ] Go to Stand Simulator
 - [ ] Click "Nouveau Stand"
 - [ ] **Client dropdown should show contacts**
@@ -111,6 +131,7 @@ npm run dev
 - [ ] Should work without errors
 
 ### Test 4: Product Creation
+
 - [ ] Go to Products page
 - [ ] Click "Nouveau Produit"
 - [ ] **Supplier dropdown should show contacts**
@@ -120,6 +141,7 @@ npm run dev
 - [ ] Should work without errors
 
 ### Test 5: Suppliers Page
+
 - [ ] Go to Suppliers page (Fournisseurs)
 - [ ] **Should see suppliers from Contacts**
 - [ ] Should show orange 🏪 badges (if viewing Contacts)
@@ -127,6 +149,7 @@ npm run dev
 - [ ] Data saved to Contacts table
 
 ### Test 6: Clients Page
+
 - [ ] Go to Clients page
 - [ ] **Should see clients from Contacts**
 - [ ] Should show blue 👤 badges (if viewing Contacts)
@@ -136,6 +159,7 @@ npm run dev
 ## 🎯 Current Status
 
 ### ✅ Working Features:
+
 - Login/Authentication
 - Contacts module (full CRUD)
 - Contact type filtering
@@ -145,6 +169,7 @@ npm run dev
 - Clients page (reads from Contacts)
 
 ### ⚠️ Legacy Behavior:
+
 - Suppliers and Clients pages still exist (for backward compatibility)
 - They now read from the unified Contacts table
 - Creating a supplier creates a Contact with type='fournisseur'
@@ -153,6 +178,7 @@ npm run dev
 ## 📊 Data Flow
 
 ### Stand Creation:
+
 ```
 User selects client → Dropdown shows contacts with type='client' or 'both'
                     ↓
@@ -160,6 +186,7 @@ User selects client → Dropdown shows contacts with type='client' or 'both'
 ```
 
 ### Product Creation:
+
 ```
 User selects supplier → Dropdown shows contacts with type='fournisseur' or 'both'
                       ↓
@@ -167,6 +194,7 @@ User selects supplier → Dropdown shows contacts with type='fournisseur' or 'bo
 ```
 
 ### Suppliers Page:
+
 ```
 Page loads → Calls getContacts('fournisseur')
            ↓
@@ -176,6 +204,7 @@ Page loads → Calls getContacts('fournisseur')
 ```
 
 ### Clients Page:
+
 ```
 Page loads → Calls getContacts('client')
            ↓
@@ -187,18 +216,21 @@ Page loads → Calls getContacts('client')
 ## 🔄 Migration Path
 
 ### Phase 1: ✅ COMPLETE
+
 - Created unified Contact model
 - Created Contact API endpoints
 - Migrated existing suppliers to Contacts
 - Built Contacts UI with filtering
 
 ### Phase 2: ✅ COMPLETE (This Update)
+
 - Updated StandSimulator to use Contacts
 - Updated Products to use Contacts
 - Updated Suppliers page to use Contacts
 - Updated Clients page to use Contacts
 
 ### Phase 3: TODO (Future)
+
 - Update backend Invoice/Stand models to use Contact foreign keys
 - Remove legacy Client and Supplier API endpoints
 - Update database relationships
@@ -207,20 +239,24 @@ Page loads → Calls getContacts('client')
 ## 🐛 Known Issues & Limitations
 
 ### 1. Backend Must Be Running
+
 **Issue**: Frontend shows "Failed to fetch" if backend is down  
 **Solution**: Always ensure backend is running on port 5000
 
 ### 2. Legacy API Endpoints Still Exist
+
 **Why**: Backward compatibility during transition  
 **Future**: Will be removed once all modules are updated
 
 ### 3. Database Relationships
+
 **Current**: Stands still reference client_id from Client table  
 **Future**: Will be updated to reference Contact table
 
 ## 💡 Pro Tips
 
 ### Tip 1: Creating "Both" Contacts
+
 ```
 1. Create a contact as 'client'
 2. Edit the contact
@@ -229,6 +265,7 @@ Page loads → Calls getContacts('client')
 ```
 
 ### Tip 2: Finding Contacts
+
 ```
 Use the Contacts page to:
 - View ALL contacts in one place
@@ -238,6 +275,7 @@ Use the Contacts page to:
 ```
 
 ### Tip 3: Server Management
+
 ```
 # Keep both terminals open:
 Terminal 1: Backend (Python Flask)
@@ -249,26 +287,33 @@ Terminal 2: Frontend (Vite dev server)
 ## 🆘 Troubleshooting
 
 ### Error: "Failed to fetch"
+
 **Cause**: Backend not running  
-**Fix**: 
+**Fix**:
+
 ```bash
 C:/Users/mouhib/Downloads/event-management-platform/.venv/Scripts/python.exe backend/app.py
 ```
 
 ### Error: "Cannot read property 'name' of undefined"
+
 **Cause**: Contacts not loaded yet  
 **Fix**: Wait for page to fully load, check backend logs
 
 ### Error: Client/Supplier dropdown is empty
+
 **Cause**: No contacts of that type exist  
-**Fix**: 
+**Fix**:
+
 1. Go to Contacts page
 2. Create a contact with appropriate type
 3. Refresh the stand/product page
 
 ### Backend won't start
+
 **Cause**: Port 5000 already in use  
 **Fix**:
+
 ```bash
 # Find process on port 5000
 netstat -ano | findstr :5000
@@ -278,8 +323,10 @@ taskkill /PID <process_id> /F
 ```
 
 ### Frontend won't start
+
 **Cause**: Port 5173 already in use  
 **Fix**:
+
 ```bash
 # Find process on port 5173
 netstat -ano | findstr :5173
@@ -293,16 +340,19 @@ taskkill /PID <process_id> /F
 After verifying everything works:
 
 1. **Test Thoroughly**:
+
    - Create stands with clients from Contacts
    - Create products with suppliers from Contacts
    - Verify data appears correctly in all pages
 
 2. **Create More Contacts**:
+
    - Add real clients
    - Add real suppliers
    - Create some "both" type contacts for partners
 
 3. **Deploy to Render**:
+
    - Commit these changes
    - Push to GitHub
    - Render will auto-deploy
@@ -328,13 +378,15 @@ curl http://localhost:5173
 
 ## 📝 Summary
 
-**Before**: 
+**Before**:
+
 - Separate Client and Supplier tables
 - Stand creation used getClients()
 - Product creation used getSuppliers()
 - No unified view of all contacts
 
 **After**:
+
 - Unified Contact table with type field
 - Stand creation uses getContacts('client')
 - Product creation uses getContacts('fournisseur')

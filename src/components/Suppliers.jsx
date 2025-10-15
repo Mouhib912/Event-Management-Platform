@@ -34,8 +34,8 @@ export default function Suppliers() {
   const loadSuppliers = async () => {
     try {
       setIsLoading(true)
-      // Load from Contacts API with fournisseur filter
-      const data = await apiService.getContacts('fournisseur')
+      // Load ALL contacts, then filter client-side
+      const data = await apiService.getContacts('all')
       // Filter to ensure we only get fournisseur or both types
       const supplierData = data.filter(c => 
         c.contact_type === 'fournisseur' || c.contact_type === 'both'

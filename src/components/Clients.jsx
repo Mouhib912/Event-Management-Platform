@@ -38,8 +38,8 @@ export default function Clients() {
 
   const fetchClients = async () => {
     try {
-      // Load from Contacts API with client filter
-      const data = await apiService.getContacts('client')
+      // Load ALL contacts, then filter client-side
+      const data = await apiService.getContacts('all')
       // Filter to ensure we only get client or both types
       const clientData = data.filter(c => 
         c.contact_type === 'client' || c.contact_type === 'both'

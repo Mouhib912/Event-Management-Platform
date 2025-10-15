@@ -35,7 +35,7 @@ export default function StandSimulator() {
     try {
       const [productsData, contactsData, categoriesData] = await Promise.all([
         apiService.getProducts(),
-        apiService.getContacts('client'), // Get contacts of type 'client' or 'both'
+        apiService.getContacts('all'), // Get ALL contacts, then filter
         apiService.getCategories()
       ])
       setProducts(productsData)

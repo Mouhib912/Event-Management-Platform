@@ -9,12 +9,14 @@ The platform is being restructured from a booth-focused system to a comprehensiv
 ## 🎯 Core Philosophy
 
 ### Main Purpose: ERP/CRM
+
 - **Input purchases** (from contacts)
 - **Input sales** (to contacts)
 - **Manage relationships** with all business contacts
 - **Track inventory, orders, invoices**
 
 ### Addon Module: Booth Maker
+
 - Create exhibition stands
 - Simulate stand configurations
 - Generate quotes for booth rentals
@@ -27,11 +29,13 @@ The platform is being restructured from a booth-focused system to a comprehensiv
 ### 🔹 Unified Contacts System
 
 **Why Unified?**
+
 - A contact can be BOTH a client AND a supplier
 - Example: We sell products X, Y, Z to Company A, AND we buy services from Company A
 - Single source of truth for all business relationships
 
 **Contact Properties:**
+
 ```
 Contact {
   id: integer
@@ -49,6 +53,7 @@ Contact {
 ```
 
 **Visual Representation:**
+
 ```
 ┌─────────────────────────────────────────┐
 │ 👥 CONTACTS                             │
@@ -122,6 +127,7 @@ Contact {
 **Purpose:** Manage all business relationships
 
 **Features:**
+
 - ✅ Create/Edit/Delete contacts
 - ✅ Tag as Client, Fournisseur, or Both
 - ✅ View contact history (purchases made, sales to them)
@@ -130,6 +136,7 @@ Contact {
 - ✅ Export contact lists
 
 **UI Components:**
+
 - Contact list with type badges
 - Detailed contact profile
 - Activity timeline
@@ -142,6 +149,7 @@ Contact {
 **Purpose:** Track and manage all purchases
 
 #### Sub-module: **Bons de Commande** (Purchase Orders)
+
 ```
 Bon de Commande {
   numero: string (auto-generated)
@@ -163,6 +171,7 @@ Bon de Commande {
 ```
 
 **Workflow:**
+
 1. Select Fournisseur (from Contacts)
 2. Add products with quantities and prices
 3. Generate purchase order
@@ -171,6 +180,7 @@ Bon de Commande {
 6. Link to payment/accounting
 
 #### Sub-module: **Produits**
+
 - List all products from all suppliers
 - Create new products
 - **Category selection** (for organization)
@@ -179,6 +189,7 @@ Bon de Commande {
 - Track inventory levels
 
 **Product Properties:**
+
 ```
 Product {
   name: string
@@ -201,6 +212,7 @@ Product {
 **Purpose:** Track and manage all sales
 
 **Features:**
+
 - Factures & Devis (existing functionality)
 - Link to Contacts (as clients)
 - Track payment status
@@ -214,23 +226,28 @@ Product {
 **Purpose:** Specialized module for exhibition stand creation
 
 **Access to:**
+
 - Only products where `show_in_booth = true`
 - Only categories enabled in Settings
 - Client contacts for stand assignment
 
 **Sub-modules:**
+
 1. **Créer un Stand**
+
    - Select client contact
    - Choose products (filtered by booth categories)
    - Configure stand layout
    - Generate quote
 
 2. **Catalogue des Stands**
+
    - View all created stands
    - Status tracking
    - Validation workflow
 
 3. **Simulateur de Stand**
+
    - Visual stand builder
    - Real-time pricing
 
@@ -246,6 +263,7 @@ Product {
 **Purpose:** User and system management
 
 **Features:**
+
 - Gestion Utilisateurs (moved from main menu)
 - Roles & Permissions
 - System logs
@@ -280,11 +298,13 @@ Product {
 ```
 
 **Implementation:**
+
 ```sql
 ALTER TABLE category ADD COLUMN show_in_booth BOOLEAN DEFAULT FALSE;
 ```
 
 **Logic:**
+
 - When creating a stand, only fetch categories where `show_in_booth = TRUE`
 - Admins can toggle categories on/off from Settings
 - Products inherit category visibility
@@ -294,6 +314,7 @@ ALTER TABLE category ADD COLUMN show_in_booth BOOLEAN DEFAULT FALSE;
 ## 🔄 Data Migration Strategy
 
 ### Phase 1: Create Contacts Table
+
 ```sql
 CREATE TABLE contact (
   id INTEGER PRIMARY KEY,
@@ -311,6 +332,7 @@ CREATE TABLE contact (
 ```
 
 ### Phase 2: Migrate Data
+
 ```python
 # Merge Clients → Contacts (type: 'client')
 INSERT INTO contact (name, company, email, phone, address, contact_type, status, created_at)
@@ -322,6 +344,7 @@ SELECT name, NULL, email, phone, address, 'fournisseur', speciality, status, cre
 ```
 
 ### Phase 3: Update References
+
 ```python
 # Update invoices to use contact_id
 ALTER TABLE invoice ADD COLUMN contact_id INTEGER REFERENCES contact(id);
@@ -337,6 +360,7 @@ UPDATE product SET supplier_contact_id = (SELECT id FROM contact WHERE contact.c
 ```
 
 ### Phase 4: Add New Fields
+
 ```sql
 # Add show_in_booth to products
 ALTER TABLE product ADD COLUMN show_in_booth BOOLEAN DEFAULT TRUE;
@@ -350,6 +374,7 @@ ALTER TABLE category ADD COLUMN show_in_booth BOOLEAN DEFAULT TRUE;
 ## 🎨 UI/UX Improvements
 
 ### Contact Type Badges
+
 ```jsx
 // Client only
 <Badge variant="primary">👤 Client</Badge>
@@ -362,12 +387,14 @@ ALTER TABLE category ADD COLUMN show_in_booth BOOLEAN DEFAULT TRUE;
 ```
 
 ### Module Icons
+
 - 📥 Achats (downward arrow = incoming purchases)
 - 📤 Ventes (upward arrow = outgoing sales)
 - 🎪 Booth Maker (tent icon)
 - 👥 Contacts (people icon)
 
 ### Color Coding
+
 - Achats: Blue theme (trust, incoming)
 - Ventes: Green theme (money, growth)
 - Booth Maker: Purple theme (specialty)
@@ -378,12 +405,14 @@ ALTER TABLE category ADD COLUMN show_in_booth BOOLEAN DEFAULT TRUE;
 ## 📝 Implementation Priority
 
 ### Phase 1: Foundation (Week 1)
+
 1. ✅ Create Contact model and table
 2. ✅ Migrate existing clients and suppliers
 3. ✅ Build Contacts.jsx page with filtering
 4. ✅ Update API endpoints
 
 ### Phase 2: Module Restructuring (Week 2)
+
 1. ✅ Reorganize sidebar navigation
 2. ✅ Move Products under Achats
 3. ✅ Add "show_in_booth" checkbox to products
@@ -391,12 +420,14 @@ ALTER TABLE category ADD COLUMN show_in_booth BOOLEAN DEFAULT TRUE;
 5. ✅ Group Booth Maker items together
 
 ### Phase 3: Category Management (Week 3)
+
 1. ✅ Add "show_in_booth" to categories
 2. ✅ Create Category management under Booth Maker
 3. ✅ Build Settings page with category toggle
 4. ✅ Filter categories in stand creation
 
 ### Phase 4: Polish & Features (Week 4)
+
 1. ✅ Administration module consolidation
 2. ✅ Enhanced statistics and reporting
 3. ✅ UI/UX improvements
@@ -407,6 +438,7 @@ ALTER TABLE category ADD COLUMN show_in_booth BOOLEAN DEFAULT TRUE;
 ## 🚀 Expected Benefits
 
 ### Business Benefits
+
 - **Unified View:** See all relationships in one place
 - **Better Tracking:** Know who you buy from and sell to
 - **Flexibility:** Contacts can change roles over time
@@ -414,6 +446,7 @@ ALTER TABLE category ADD COLUMN show_in_booth BOOLEAN DEFAULT TRUE;
 - **Better Reporting:** Cross-reference purchases vs sales
 
 ### Technical Benefits
+
 - **Simpler Schema:** One contact table instead of two
 - **Better Relationships:** Cleaner foreign keys
 - **Easier Maintenance:** Single source of truth
@@ -421,6 +454,7 @@ ALTER TABLE category ADD COLUMN show_in_booth BOOLEAN DEFAULT TRUE;
 - **Clearer Purpose:** ERP/CRM first, booth maker second
 
 ### User Experience Benefits
+
 - **Logical Navigation:** Clear module separation
 - **Focused Tools:** Each module has specific purpose
 - **Better Organization:** Related features grouped together
@@ -462,8 +496,9 @@ This restructuring positions the platform as a **comprehensive business manageme
 4. **Professional Grade** ERP/CRM for event and exhibition businesses
 
 The platform becomes a **one-stop solution** for event companies to manage:
+
 - Customer relationships
-- Supplier relationships  
+- Supplier relationships
 - Product inventory
 - Purchase orders
 - Sales and invoicing

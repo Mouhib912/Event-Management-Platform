@@ -17,7 +17,9 @@ This is the key realization that drives the entire restructure. Instead of maint
 ## 🎯 Three Main Modules
 
 ### 1️⃣ **ACHATS** (Purchases) - 📥
+
 **What:** Track everything you BUY from your fournisseurs
+
 - Create purchase orders (Bon de Commande)
 - Manage products you've purchased
 - Track deliveries and payments
@@ -27,8 +29,10 @@ This is the key realization that drives the entire restructure. Instead of maint
 
 ---
 
-### 2️⃣ **VENTES** (Sales) - 📤  
+### 2️⃣ **VENTES** (Sales) - 📤
+
 **What:** Track everything you SELL to your clients
+
 - Generate invoices and quotes (Devis)
 - Manage customer orders
 - Track payments received
@@ -39,7 +43,9 @@ This is the key realization that drives the entire restructure. Instead of maint
 ---
 
 ### 3️⃣ **BOOTH MAKER** (Addon) - 🎪
+
 **What:** Specialized tool for creating exhibition stands
+
 - Select products (from your inventory)
 - Configure stand layouts
 - Generate quotes for booth rentals
@@ -92,11 +98,13 @@ Result: Clean, focused booth creation tool that only shows relevant products.
 ## 📊 New Navigation Logic
 
 ### Old Way (Booth-Centric)
+
 ```
 Everything mixed together, booth tools scattered throughout menu
 ```
 
 ### New Way (Business Logic)
+
 ```
 📥 ACHATS
    ↓
@@ -104,7 +112,7 @@ Everything mixed together, booth tools scattered throughout menu
    ↓
    Bons de Commande + Produits
 
-📤 VENTES  
+📤 VENTES
    ↓
    What we SELL
    ↓
@@ -124,18 +132,21 @@ Everything mixed together, booth tools scattered throughout menu
 ## 🚀 Why This Matters
 
 ### For Business Operations
+
 1. **Single source of truth** - One place to manage all relationships
 2. **Better insights** - See full picture of each relationship (buy vs sell)
 3. **Cleaner data** - No duplicates, no confusion
 4. **Professional** - Proper ERP/CRM structure
 
 ### For Users
+
 1. **Logical navigation** - Find things where you expect them
 2. **Focused tools** - Each module does one thing well
 3. **Less clutter** - Booth maker only shows relevant items
 4. **Flexibility** - Easy to expand with new modules later
 
 ### For Technical
+
 1. **Cleaner schema** - One Contact table vs two (Client + Supplier)
 2. **Better relationships** - Simpler foreign keys
 3. **Easier maintenance** - Single source of truth
@@ -167,11 +178,13 @@ Everything mixed together, booth tools scattered throughout menu
 ## 🎨 Before & After
 
 ### Before
+
 ```
 "A booth rental tool with some invoicing"
 ```
 
-### After  
+### After
+
 ```
 "A comprehensive ERP/CRM platform for event businesses,
  with specialized booth rental capabilities"
@@ -194,8 +207,9 @@ Before starting implementation, confirm:
 ## 🎯 The Bottom Line
 
 You're building a **professional business management platform** that:
+
 - Tracks purchases (Achats)
-- Tracks sales (Ventes)  
+- Tracks sales (Ventes)
 - Manages relationships (Contacts)
 - Has specialized booth tools (Booth Maker)
 - Can grow into full ERP (Inventory, Accounting, HR)
@@ -207,6 +221,7 @@ You're building a **professional business management platform** that:
 ## 📞 Next Steps
 
 1. **Review** all three planning documents:
+
    - `ERP_CRM_RESTRUCTURE.md` (detailed plan)
    - `RESTRUCTURE_QUICK_GUIDE.md` (quick reference)
    - `VISUAL_ARCHITECTURE.md` (visual diagrams)

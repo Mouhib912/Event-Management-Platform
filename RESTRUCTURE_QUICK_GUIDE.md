@@ -3,10 +3,11 @@
 ## Before vs After
 
 ### ❌ OLD STRUCTURE (Booth-Focused)
+
 ```
 - Dashboard
 - Clients (separate)
-- Suppliers (separate)  
+- Suppliers (separate)
 - Products
 - Stands (main focus)
 - Stand Catalog
@@ -58,14 +59,14 @@
 
 ## Key Changes Summary
 
-| Area | Change | Why |
-|------|--------|-----|
-| **Contacts** | Merge Clients + Suppliers → Contacts | One company can be both client AND supplier |
-| **Navigation** | Group by business function | ERP/CRM logic (Achats/Ventes) |
-| **Products** | Move to Achats module | Products are purchased items |
-| **Booth Maker** | Separate addon section | Not the main purpose |
-| **Categories** | Add toggle for booth visibility | Not all products relevant for booths |
-| **Settings** | Add category management | Control what shows in booth maker |
+| Area            | Change                               | Why                                         |
+| --------------- | ------------------------------------ | ------------------------------------------- |
+| **Contacts**    | Merge Clients + Suppliers → Contacts | One company can be both client AND supplier |
+| **Navigation**  | Group by business function           | ERP/CRM logic (Achats/Ventes)               |
+| **Products**    | Move to Achats module                | Products are purchased items                |
+| **Booth Maker** | Separate addon section               | Not the main purpose                        |
+| **Categories**  | Add toggle for booth visibility      | Not all products relevant for booths        |
+| **Settings**    | Add category management              | Control what shows in booth maker           |
 
 ---
 
@@ -163,6 +164,7 @@ When creating a stand, ONLY products from enabled categories show up!
 ## Implementation Checklist
 
 ### Backend
+
 - [ ] Create Contact model (merge Client + Supplier)
 - [ ] Add `contact_type` field ['client', 'fournisseur', 'both']
 - [ ] Add `show_in_booth` to Product model
@@ -172,6 +174,7 @@ When creating a stand, ONLY products from enabled categories show up!
 - [ ] Create Bon de Commande (Purchase Order) model
 
 ### Frontend
+
 - [ ] Create Contacts.jsx (unified page)
 - [ ] Update Layout.jsx with new sidebar structure
 - [ ] Move Products under Achats section
@@ -182,6 +185,7 @@ When creating a stand, ONLY products from enabled categories show up!
 - [ ] Add contact type badges and filters
 
 ### Database
+
 - [ ] Run migration: Merge clients + suppliers → contacts
 - [ ] Update foreign keys (invoices, stands, products)
 - [ ] Add new columns (contact_type, show_in_booth)
@@ -193,18 +197,21 @@ When creating a stand, ONLY products from enabled categories show up!
 ## Migration Safety
 
 ### Before Migration
+
 1. ✅ Full database backup
 2. ✅ Test migration on development environment
 3. ✅ Document rollback procedure
 4. ✅ Verify all foreign key relationships
 
 ### During Migration
+
 1. ✅ Stop application
 2. ✅ Run migration scripts
 3. ✅ Verify data integrity
 4. ✅ Run smoke tests
 
 ### After Migration
+
 1. ✅ Test all modules
 2. ✅ Verify no data loss
 3. ✅ Check all relationships
@@ -215,23 +222,27 @@ When creating a stand, ONLY products from enabled categories show up!
 ## User Communication
 
 ### For End Users
+
 **Subject: Platform Upgrade - New CRM/ERP Structure**
 
 We're upgrading the platform to better serve your business needs:
 
 ✨ **New Features:**
+
 - Unified contact management (clients and suppliers in one place)
 - Purchase order tracking
 - Better product organization
 - Booth Maker as a specialized tool
 
 📍 **What Changes:**
+
 - Navigation menu reorganized by business function
 - "Clients" and "Suppliers" merged into "Contacts"
 - Products moved to "Achats" section
 - Booth tools grouped under "Booth Maker"
 
 ✅ **Your Data:**
+
 - All your data is safe and preserved
 - Existing contacts, products, and invoices unchanged
 - No action required from you
@@ -243,21 +254,25 @@ We're upgrading the platform to better serve your business needs:
 After implementation, we should see:
 
 ✅ **Usability**
+
 - Reduced clicks to common actions
 - Clearer navigation structure
 - Easier to find features
 
 ✅ **Data Quality**
+
 - No duplicate contacts
 - Cleaner relationships
 - Better reporting accuracy
 
 ✅ **Performance**
+
 - Same or better response times
 - Efficient queries with proper indexes
 - No degradation
 
 ✅ **Flexibility**
+
 - Easy to add new modules
 - Scalable architecture
 - Future-proof design

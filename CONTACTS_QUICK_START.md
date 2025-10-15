@@ -49,21 +49,25 @@ Your Browser: http://localhost:5173
 ## 5-Minute Quick Start
 
 ### Task 1: View Existing Contacts (30 seconds)
+
 1. ✅ Navigate to Contacts in sidebar
 2. ✅ See 9 fournisseurs displayed
 3. ✅ Notice orange 🏪 badges on each card
 
 ### Task 2: Filter by Type (30 seconds)
+
 1. ✅ Click **"Clients"** tab → Empty (0 clients)
 2. ✅ Click **"Fournisseurs"** tab → See all 9
 3. ✅ Click **"All"** tab → See all 9 again
 
 ### Task 3: Search for a Contact (30 seconds)
+
 1. ✅ Type "TechnoDisplay" in search box
 2. ✅ See filtered results instantly
 3. ✅ Clear search → All contacts return
 
 ### Task 4: Create Your First Client (2 minutes)
+
 1. ✅ Click **"+ Nouveau Contact"** button
 2. ✅ Fill in the form:
    ```
@@ -80,6 +84,7 @@ Your Browser: http://localhost:5173
 6. ✅ Statistics update: Clients = 1
 
 ### Task 5: Change a Contact Type (1 minute)
+
 1. ✅ Click edit icon (✏️) on any fournisseur
 2. ✅ Change Type from "Fournisseur" to "Both"
 3. ✅ Click **"Mettre à jour"**
@@ -87,6 +92,7 @@ Your Browser: http://localhost:5173
 5. ✅ Statistics update: Both = 1
 
 ### Task 6: Filter by "Both" (30 seconds)
+
 1. ✅ Click **"Both"** tab
 2. ✅ See only contacts with bidirectional relationships
 3. ✅ These appear in BOTH client and fournisseur searches
@@ -108,6 +114,7 @@ Your Browser: http://localhost:5173
 ### When to Use Each Type
 
 **👤 Client (Blue)**
+
 ```
 Use when: They buy from you
 Example: Event organizer ordering stands
@@ -115,6 +122,7 @@ Shows in: Clients tab, All tab
 ```
 
 **🏪 Fournisseur (Orange)**
+
 ```
 Use when: You buy from them
 Example: Lighting supplier, Stand materials
@@ -122,6 +130,7 @@ Shows in: Fournisseurs tab, All tab
 ```
 
 **🔄 Both (Green)**
+
 ```
 Use when: Bidirectional relationship
 Example: Partner company that both:
@@ -133,6 +142,7 @@ Shows in: Clients tab, Fournisseurs tab, Both tab, All tab
 ## Real-World Scenarios
 
 ### Scenario 1: New Client Signs Up
+
 ```
 1. Click "Nouveau Contact"
 2. Enter: "Grand Hôtel Tunis"
@@ -142,6 +152,7 @@ Shows in: Clients tab, Fournisseurs tab, Both tab, All tab
 ```
 
 ### Scenario 2: New Supplier Onboarded
+
 ```
 1. Click "Nouveau Contact"
 2. Enter: "LED Masters"
@@ -152,6 +163,7 @@ Shows in: Clients tab, Fournisseurs tab, Both tab, All tab
 ```
 
 ### Scenario 3: Client Becomes Supplier Too
+
 ```
 1. Edit existing client "Grand Hôtel Tunis"
 2. Change Type: Client → Both
@@ -161,6 +173,7 @@ Shows in: Clients tab, Fournisseurs tab, Both tab, All tab
 ```
 
 ### Scenario 4: Relationship Ends
+
 ```
 1. Edit contact
 2. Change Status: Actif → Inactif
@@ -171,12 +184,14 @@ Shows in: Clients tab, Fournisseurs tab, Both tab, All tab
 ## Form Fields Explained
 
 ### Required Fields
+
 ```
 Name* : Company or person name (REQUIRED)
 Type* : Client / Fournisseur / Both (REQUIRED)
 ```
 
 ### Optional Fields
+
 ```
 Contact Person : Name of your contact at the company
 Company        : Official company name (if Name is different)
@@ -189,6 +204,7 @@ Notes          : Any additional information
 ```
 
 ### Special Field: Speciality
+
 ```
 This field appears/disappears based on Type:
 - Type = Client        → Speciality hidden
@@ -199,7 +215,9 @@ This field appears/disappears based on Type:
 ## Search & Filter Power
 
 ### Multi-Field Search
+
 The search box looks across:
+
 ```
 ✓ Name
 ✓ Company
@@ -209,6 +227,7 @@ The search box looks across:
 ```
 
 ### Combined Filtering
+
 ```
 Search + Tab Filtering = Powerful Queries
 
@@ -240,11 +259,12 @@ Example 3:
 │  Both: Contacts with bidirectional relationship  │
 └──────────────────────────────────────────────────┘
 
-Note: "Both" contacts are counted in BOTH 
+Note: "Both" contacts are counted in BOTH
       Clients and Fournisseurs numbers
 ```
 
 ### Example Calculation
+
 ```
 Total Contacts: 10
 ├─ 3 Clients only
@@ -303,11 +323,12 @@ Display:
 ## Tips & Best Practices
 
 ### 💡 Tip 1: Use "Both" Wisely
+
 ```
 Only set Type = "Both" when there's a genuine
 bidirectional business relationship.
 
-✅ Good: Company that supplies materials AND 
+✅ Good: Company that supplies materials AND
         buys finished stands
 
 ❌ Bad: Company that might become a client someday
@@ -315,6 +336,7 @@ bidirectional business relationship.
 ```
 
 ### 💡 Tip 2: Fill in Contact Person
+
 ```
 Always add the Contact Person field:
 - Helps with follow-ups
@@ -323,6 +345,7 @@ Always add the Contact Person field:
 ```
 
 ### 💡 Tip 3: Use Notes Field
+
 ```
 Track important details:
 - Preferred payment terms
@@ -332,6 +355,7 @@ Track important details:
 ```
 
 ### 💡 Tip 4: Keep Status Updated
+
 ```
 Mark contacts as "Inactif" when:
 - No longer doing business
@@ -345,6 +369,7 @@ Benefits:
 ```
 
 ### 💡 Tip 5: Search by Phone
+
 ```
 Quick way to find contacts:
 - Search: "+216 71" → All landlines
@@ -423,5 +448,5 @@ This unified approach simplifies your entire workflow! 🚀
 
 ---
 
-*Ready to test? Visit: http://localhost:5173/contacts*
-*Questions? Check: CONTACTS_MODULE_COMPLETE.md*
+_Ready to test? Visit: http://localhost:5173/contacts_
+_Questions? Check: CONTACTS_MODULE_COMPLETE.md_

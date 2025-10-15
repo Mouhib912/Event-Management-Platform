@@ -17,7 +17,7 @@
     • Invoice                          Everything serves
     • Category                         booth creation
     • User
-    
+
     Problems:
     ❌ Client & Supplier separate (duplicates for companies)
     ❌ No purchase tracking
@@ -43,7 +43,7 @@
     • User              Generate      🎪 BOOTH MAKER (Addon)
                         invoices        • Uses products
                                         • Creates stands
-    
+
     Benefits:
     ✅ Unified contacts (can be both client & supplier)
     ✅ Full purchase order tracking
@@ -111,7 +111,7 @@ BEFORE: Separate Tables
 │ client_id  │        │ supplier_id │
 └────────────┘        └─────────────┘
 
-Problem: What if Company A is BOTH a client (buys stands) 
+Problem: What if Company A is BOTH a client (buys stands)
          AND a supplier (sells us products)?
          → Duplicate entry needed! ❌
 
@@ -198,7 +198,7 @@ Example 2: Sale Workflow (Booth Rental)
 2. Select Client: "Company A" (contact_type: 'client' or 'both')
 3. Add products (only products with show_in_booth=TRUE appear):
    - 2x Tables
-   - 8x Chairs  
+   - 8x Chairs
    - 4x LED Lights
    - 1x Monitor
 4. Calculate total
@@ -304,7 +304,7 @@ Week 4: Polish & Launch
                   │             │
             🎪 BOOTH MAKER   📊 REPORTS
             (Specialized)   (Analytics)
-            
+
     A professional platform for event companies to manage
     their entire business, with booth rental as a specialized
     value-added service.
