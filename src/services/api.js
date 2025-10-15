@@ -99,6 +99,32 @@ class ApiService {
     })
   }
 
+  // Contacts (Unified Clients + Suppliers)
+  async getContacts(type = 'all') {
+    const params = type !== 'all' ? `?type=${type}` : ''
+    return this.request(`/contacts${params}`)
+  }
+
+  async createContact(contactData) {
+    return this.request('/contacts', {
+      method: 'POST',
+      body: JSON.stringify(contactData),
+    })
+  }
+
+  async updateContact(contactId, contactData) {
+    return this.request(`/contacts/${contactId}`, {
+      method: 'PUT',
+      body: JSON.stringify(contactData),
+    })
+  }
+
+  async deleteContact(contactId) {
+    return this.request(`/contacts/${contactId}`, {
+      method: 'DELETE',
+    })
+  }
+
   // Suppliers
   async getSuppliers() {
     return this.request('/suppliers')

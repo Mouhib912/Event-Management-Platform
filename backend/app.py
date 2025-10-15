@@ -56,6 +56,24 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
+# Unified Contact Model (replaces Client and Supplier)
+class Contact(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    contact_person = db.Column(db.String(100))
+    email = db.Column(db.String(120))
+    phone = db.Column(db.String(20))
+    address = db.Column(db.Text)
+    company = db.Column(db.String(100))
+    contact_type = db.Column(db.String(20), default='client')  # 'client', 'fournisseur', 'both'
+    speciality = db.Column(db.String(200))  # Area of expertise (for fournisseurs)
+    status = db.Column(db.String(20), default='Actif')
+    notes = db.Column(db.Text)  # General notes about the contact
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    
+    creator = db.relationship('User', backref='created_contacts')
+
 class Supplier(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -297,6 +315,110 @@ def register():
     db.session.commit()
     
     return jsonify({'message': 'User created successfully'}), 201
+
+# Contact Routes (Unified Clients + Suppliers)
+@app.route('/api/contacts', methods=['GET'])
+@jwt_required()
+def get_contacts():
+    try:
+        # Get filter parameter
+        contact_type = request.args.get('type', 'all')  # 'all', 'client', 'fournisseur', 'both'
+        
+        if contact_type == 'all':
+            contacts = Contact.query.all()
+        else:
+            contacts = Contact.query.filter_by(contact_type=contact_type).all()
+        
+        return jsonify([{
+            'id': c.id,
+            'name': c.name,
+            'contact_person': c.contact_person,
+            'email': c.email,
+            'phone': c.phone,
+            'address': c.address,
+            'company': c.company,
+            'contact_type': c.contact_type,
+            'speciality': c.speciality,
+            'status': c.status if hasattr(c, 'status') else 'Actif',
+            'notes': c.notes if hasattr(c, 'notes') else '',
+            'created_at': c.created_at.isoformat() if c.created_at else None
+        } for c in contacts])
+    except Exception as e:
+        print(f"Error in get_contacts: {str(e)}")
+        return jsonify({'message': f'Error fetching contacts: {str(e)}'}), 500
+
+@app.route('/api/contacts', methods=['POST'])
+@jwt_required()
+def create_contact():
+    try:
+        current_user_id = int(get_jwt_identity())
+        data = request.get_json()
+        
+        contact = Contact(
+            name=data['name'],
+            contact_person=data.get('contact_person'),
+            email=data.get('email'),
+            phone=data.get('phone'),
+            address=data.get('address'),
+            company=data.get('company'),
+            contact_type=data.get('contact_type', 'client'),
+            speciality=data.get('speciality'),
+            status=data.get('status', 'Actif'),
+            notes=data.get('notes'),
+            created_by=current_user_id
+        )
+        
+        db.session.add(contact)
+        db.session.commit()
+        
+        return jsonify({'message': 'Contact created successfully', 'id': contact.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error in create_contact: {str(e)}")
+        return jsonify({'message': f'Error creating contact: {str(e)}'}), 500
+
+@app.route('/api/contacts/<int:contact_id>', methods=['PUT'])
+@jwt_required()
+def update_contact(contact_id):
+    try:
+        contact = Contact.query.get_or_404(contact_id)
+        data = request.get_json()
+        
+        contact.name = data.get('name', contact.name)
+        contact.contact_person = data.get('contact_person', contact.contact_person)
+        contact.email = data.get('email', contact.email)
+        contact.phone = data.get('phone', contact.phone)
+        contact.address = data.get('address', contact.address)
+        contact.company = data.get('company', contact.company)
+        contact.contact_type = data.get('contact_type', contact.contact_type)
+        contact.speciality = data.get('speciality', contact.speciality)
+        contact.notes = data.get('notes', contact.notes)
+        
+        if 'status' in data:
+            contact.status = data.get('status', contact.status)
+        
+        db.session.commit()
+        
+        return jsonify({'message': 'Contact updated successfully'})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error in update_contact: {str(e)}")
+        return jsonify({'message': f'Error updating contact: {str(e)}'}), 500
+
+@app.route('/api/contacts/<int:contact_id>', methods=['DELETE'])
+@jwt_required()
+def delete_contact(contact_id):
+    try:
+        contact = Contact.query.get_or_404(contact_id)
+        
+        db.session.delete(contact)
+        db.session.commit()
+        
+        return jsonify({'message': 'Contact deleted successfully'})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error in delete_contact: {str(e)}")
+        return jsonify({'message': f'Error deleting contact: {str(e)}'}), 500
 
 # Supplier Routes
 @app.route('/api/suppliers', methods=['GET'])

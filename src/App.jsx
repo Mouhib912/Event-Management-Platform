@@ -8,6 +8,7 @@ import Dashboard from './components/Dashboard'
 import Statistics from './components/Statistics'
 import Suppliers from './components/Suppliers'
 import Clients from './components/Clients'
+import Contacts from './components/Contacts'
 import Products from './components/Products'
 import StandSimulator from './components/StandSimulator'
 import StandCatalog from './components/StandCatalog'
@@ -47,6 +48,7 @@ function AppContent() {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/statistics" element={<Statistics />} />
+            <Route path="/contacts" element={<Contacts />} />
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/products" element={<Products />} />

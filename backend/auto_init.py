@@ -3,13 +3,14 @@ Auto-initialization script for Render deployment
 This script runs automatically on startup and creates:
 - Database tables
 - Admin user
-- Sample suppliers
+- Sample contacts (unified)
+- Sample suppliers (legacy)
 - Sample categories
 - Sample products
 - Sample stands
 """
 
-from app import app, db, User, Supplier, Client, Category, Product, Stand
+from app import app, db, User, Contact, Supplier, Client, Category, Product, Stand
 from werkzeug.security import generate_password_hash
 from datetime import datetime
 

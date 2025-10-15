@@ -24,7 +24,8 @@ import {
   Menu,
   X,
   Building2,
-  UserPlus
+  UserPlus,
+  ContactRound
 } from 'lucide-react'
 
 export default function Layout({ children }) {
@@ -107,6 +108,15 @@ export default function Layout({ children }) {
         path: '/statistics', 
         label: 'Statistiques', 
         icon: BarChart3 
+      })
+    }
+
+    // Contacts (unified view)
+    if (canAccess('suppliers') || canAccess('clients')) {
+      items.push({ 
+        path: '/contacts', 
+        label: 'Contacts', 
+        icon: ContactRound 
       })
     }
 
