@@ -140,9 +140,9 @@ export default function Layout({ children }) {
   }
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+    <div className="flex h-screen bg-gradient-to-br from-gray-50 via-slate-50 to-gray-100">
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-indigo-600 via-purple-600 to-purple-700 shadow-2xl transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 shadow-2xl transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
         <div className="flex items-center justify-between h-16 px-6 border-b border-white/20">
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             <Hammer className="h-6 w-6" />
@@ -166,7 +166,7 @@ export default function Layout({ children }) {
                 to={item.path}
                 className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
                   isActive(item.path)
-                    ? 'bg-white text-purple-700 shadow-lg'
+                    ? 'bg-white text-slate-900 shadow-lg'
                     : 'text-white/90 hover:bg-white/10 hover:text-white'
                 }`}
                 onClick={() => setSidebarOpen(false)}
@@ -193,13 +193,13 @@ export default function Layout({ children }) {
               >
                 <Menu className="h-6 w-6" />
               </Button>
-              <h2 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+              <h2 className="text-lg font-semibold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">
                 {navigationItems.find(item => isActive(item.path))?.label || 'Tableau de Bord'}
               </h2>
             </div>
             
             <div className="flex items-center space-x-4">
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-100 to-blue-100 rounded-full">
+              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-slate-100 to-gray-100 rounded-full">
                 <Badge variant="secondary" className="bg-white/50">
                   {getRoleDisplayName(user?.role)}
                 </Badge>

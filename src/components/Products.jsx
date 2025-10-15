@@ -671,10 +671,10 @@ export default function Products() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {categoryProducts.map(product => (
-                      <div key={product.id} className="group border-2 border-gray-100 rounded-2xl p-5 space-y-3 hover:shadow-xl hover:border-purple-200 transition-all duration-300 hover:scale-105 bg-gradient-to-br from-white to-gray-50 card-hover">
+                      <div key={product.id} className="group border-2 border-gray-100 rounded-2xl p-5 space-y-3 hover:shadow-xl hover:border-slate-300 transition-all duration-300 hover:scale-105 bg-gradient-to-br from-white to-gray-50 card-hover">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <h4 className="font-bold text-lg text-gray-900 group-hover:text-purple-600 transition-colors">{product.name}</h4>
+                            <h4 className="font-bold text-lg text-gray-900 group-hover:text-slate-700 transition-colors">{product.name}</h4>
                             <p className="text-sm text-gray-600 line-clamp-2 mt-1">
                               {product.description || 'Pas de description'}
                             </p>
@@ -684,10 +684,10 @@ export default function Products() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="hover:bg-purple-100"
+                                className="hover:bg-slate-100"
                                 onClick={() => handleEdit(product)}
                               >
-                                <Edit className="h-4 w-4 text-purple-600" />
+                                <Edit className="h-4 w-4 text-slate-600" />
                               </Button>
                               <Button
                                 variant="ghost"
@@ -704,7 +704,7 @@ export default function Products() {
                           <Badge variant={product.pricing_type === 'Par Jour' ? 'default' : 'outline'} className="shadow-sm">
                             {product.pricing_type}
                           </Badge>
-                          <p className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                          <p className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">
                             {product.price?.toFixed(2)} TND
                           </p>
                         </div>

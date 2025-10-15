@@ -127,14 +127,14 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 p-6">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-purple-700 rounded-2xl p-8 text-white shadow-2xl fade-in">
+      <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-slate-950 rounded-2xl p-8 text-white shadow-2xl fade-in">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
               <Calendar className="h-8 w-8" />
               Bienvenue, {user?.name || 'Utilisateur'}
             </h1>
-            <p className="text-purple-100 text-lg">
+            <p className="text-slate-300 text-lg">
               Connecté en tant que {user?.role || 'Utilisateur'} • Tableau de bord principal
             </p>
           </div>
@@ -157,21 +157,21 @@ export default function Dashboard() {
                   {stat.title}
                 </CardTitle>
                 <div className={`p-2 rounded-lg ${
-                  index === 0 ? 'bg-blue-100' :
+                  index === 0 ? 'bg-slate-100' :
                   index === 1 ? 'bg-green-100' :
-                  index === 2 ? 'bg-purple-100' :
-                  'bg-orange-100'
+                  index === 2 ? 'bg-amber-100' :
+                  'bg-emerald-100'
                 }`}>
                   <Icon className={`h-5 w-5 ${
-                    index === 0 ? 'text-blue-600' :
+                    index === 0 ? 'text-slate-700' :
                     index === 1 ? 'text-green-600' :
-                    index === 2 ? 'text-purple-600' :
-                    'text-orange-600'
+                    index === 2 ? 'text-amber-600' :
+                    'text-emerald-600'
                   }`} />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+                <div className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent mb-2">
                   {stat.value}
                 </div>
                 <div className="flex items-center justify-between">
@@ -194,7 +194,7 @@ export default function Dashboard() {
         <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
-              <Hammer className="h-5 w-5 text-purple-600" />
+              <Hammer className="h-5 w-5 text-slate-700" />
               Actions Rapides
             </CardTitle>
             <CardDescription>
@@ -209,7 +209,7 @@ export default function Dashboard() {
                   <a
                     key={index}
                     href={action.href}
-                    className="group flex flex-col items-center p-5 rounded-xl border-2 border-gray-100 hover:border-purple-200 hover:shadow-lg transition-all duration-300 hover:scale-105 bg-gradient-to-br from-white to-gray-50"
+                    className="group flex flex-col items-center p-5 rounded-xl border-2 border-gray-100 hover:border-slate-300 hover:shadow-lg transition-all duration-300 hover:scale-105 bg-gradient-to-br from-white to-gray-50"
                   >
                     <div className={`p-4 rounded-2xl ${action.color} text-white mb-3 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
                       <Icon className="h-7 w-7" />
@@ -229,7 +229,7 @@ export default function Dashboard() {
         <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-xl">
-              <Calendar className="h-5 w-5 text-purple-600" />
+              <Calendar className="h-5 w-5 text-slate-700" />
               Activités Récentes
             </CardTitle>
             <CardDescription>
@@ -239,7 +239,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="space-y-3">
               {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start space-x-3 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-purple-50 hover:to-blue-50 transition-all duration-300 border border-gray-100 hover:border-purple-200 hover:shadow-md">
+                <div key={activity.id} className="flex items-start space-x-3 p-4 rounded-xl bg-gradient-to-r from-gray-50 to-white hover:from-slate-50 hover:to-gray-50 transition-all duration-300 border border-gray-100 hover:border-slate-300 hover:shadow-md">
                   <Badge className={`${getStatusColor(activity.status)} shrink-0 mt-0.5 shadow-sm`}>
                     {activity.status}
                   </Badge>

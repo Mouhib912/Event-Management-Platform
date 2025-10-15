@@ -40,7 +40,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-600 via-purple-600 to-purple-800 p-4 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 p-4 relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 bg-white/10 rounded-full blur-3xl animate-pulse"></div>
@@ -54,19 +54,19 @@ export default function LoginPage() {
             <h1 className="text-5xl font-bold drop-shadow-lg">
               Plateforme de Gestion Événementielle
             </h1>
-            <p className="text-xl text-purple-100">
+            <p className="text-xl text-slate-300">
               Solution complète pour l'organisation d'événements et la création de stands
             </p>
           </div>
           
           <div className="grid gap-6">
             <div className="flex items-center space-x-4 glass-effect p-4 rounded-xl hover:scale-105 transition-transform duration-300">
-              <div className="p-4 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl shadow-lg">
+              <div className="p-4 bg-gradient-to-br from-slate-600 to-slate-700 rounded-xl shadow-lg">
                 <Building2 className="h-7 w-7 text-white" />
               </div>
               <div>
                 <h3 className="font-bold text-lg text-white">Gestion ERP/CRM</h3>
-                <p className="text-purple-100">Centralisez vos clients et fournisseurs</p>
+                <p className="text-slate-300">Centralisez vos clients et fournisseurs</p>
               </div>
             </div>
             
@@ -76,22 +76,22 @@ export default function LoginPage() {
               </div>
               <div>
                 <h3 className="font-bold text-lg text-white">Simulateur de Stands</h3>
-                <p className="text-purple-100">Créez et gérez vos stands événementiels</p>
+                <p className="text-slate-300">Créez et gérez vos stands événementiels</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-4 glass-effect p-4 rounded-xl hover:scale-105 transition-transform duration-300">
-              <div className="p-4 bg-gradient-to-br from-purple-400 to-pink-600 rounded-xl shadow-lg">
+              <div className="p-4 bg-gradient-to-br from-amber-400 to-orange-600 rounded-xl shadow-lg">
                 <TrendingUp className="h-7 w-7 text-white" />
               </div>
               <div>
                 <h3 className="font-bold text-lg text-white">Tableaux de Bord</h3>
-                <p className="text-purple-100">Suivez vos KPI en temps réel</p>
+                <p className="text-slate-300">Suivez vos KPI en temps réel</p>
               </div>
             </div>
           </div>
           
-          <div className="text-sm text-purple-200 border-t border-white/20 pt-4">
+          <div className="text-sm text-slate-400 border-t border-white/20 pt-4">
             Made by Mahmoud BESBES, all rights reserved
           </div>
         </div>
@@ -99,7 +99,7 @@ export default function LoginPage() {
         {/* Right side - Login Form */}
         <Card className="w-full max-w-md mx-auto border-0 shadow-2xl bg-white/95 backdrop-blur-lg slide-in">
           <CardHeader className="space-y-2 pb-6">
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">
               Connexion
             </CardTitle>
             <CardDescription className="text-base">
@@ -117,7 +117,7 @@ export default function LoginPage() {
                   value={formData.email}
                   onChange={(e) => handleChange('email', e.target.value)}
                   required
-                  className="h-11 border-2 focus:border-purple-400"
+                  className="h-11 border-2 focus:border-slate-400"
                 />
               </div>
               
@@ -130,24 +130,24 @@ export default function LoginPage() {
                   value={formData.password}
                   onChange={(e) => handleChange('password', e.target.value)}
                   required
-                  className="h-11 border-2 focus:border-purple-400"
+                  className="h-11 border-2 focus:border-slate-400"
                 />
               </div>
               
               <Button 
                 type="submit" 
-                className="w-full h-11 text-base font-semibold bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300" 
+                className="w-full h-11 text-base font-semibold bg-gradient-to-r from-slate-700 to-slate-900 hover:from-slate-800 hover:to-slate-950 shadow-lg hover:shadow-xl transition-all duration-300" 
                 disabled={loading}
               >
                 {loading ? 'Connexion...' : 'Se connecter'}
               </Button>
             </form>
             
-            <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl border-2 border-purple-100">
+            <div className="mt-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border-2 border-slate-100">
               <p className="font-semibold text-center text-sm text-gray-700 mb-2">Comptes de test disponibles:</p>
               <div className="text-xs space-y-1.5 text-gray-600">
-                <p className="bg-white p-2 rounded-lg"><strong className="text-purple-600">Propriétaire:</strong> owner@eventmanagement.com / owner123</p>
-                <p className="bg-white p-2 rounded-lg"><strong className="text-blue-600">Commercial:</strong> test@example.com / password123</p>
+                <p className="bg-white p-2 rounded-lg"><strong className="text-slate-700">Propriétaire:</strong> owner@eventmanagement.com / owner123</p>
+                <p className="bg-white p-2 rounded-lg"><strong className="text-slate-700">Commercial:</strong> test@example.com / password123</p>
               </div>
             </div>
           </CardContent>

@@ -353,14 +353,14 @@ const Contacts = () => {
         <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-gray-50 card-hover">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Users className="h-5 w-5 text-purple-600" />
+              <div className="p-2 bg-slate-100 rounded-lg">
+                <Users className="h-5 w-5 text-slate-700" />
               </div>
               Total Contacts
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">{stats.total}</div>
+            <div className="text-3xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">{stats.total}</div>
           </CardContent>
         </Card>
 
@@ -412,7 +412,7 @@ const Contacts = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-xl flex items-center gap-2">
-              <Users className="h-6 w-6 text-purple-600" />
+              <Users className="h-6 w-6 text-slate-700" />
               Liste des Contacts
             </CardTitle>
             <div className="relative w-64">
@@ -421,14 +421,14 @@ const Contacts = () => {
                 placeholder="Rechercher..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-2 focus:border-purple-400"
+                className="pl-10 border-2 focus:border-slate-400"
               />
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4 p-1 bg-gradient-to-r from-purple-50 to-blue-50">
+            <TabsList className="grid w-full grid-cols-4 p-1 bg-gradient-to-r from-slate-50 to-gray-50">
               <TabsTrigger value="all" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
                 Tous ({stats.total})
               </TabsTrigger>
@@ -452,11 +452,11 @@ const Contacts = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredContacts.map(contact => (
-                    <Card key={contact.id} className="group border-2 border-gray-100 hover:border-purple-200 hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-white to-gray-50">
+                    <Card key={contact.id} className="group border-2 border-gray-100 hover:border-slate-300 hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-white to-gray-50">
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <CardTitle className="text-lg font-bold group-hover:text-purple-600 transition-colors">{contact.name}</CardTitle>
+                            <CardTitle className="text-lg font-bold group-hover:text-slate-700 transition-colors">{contact.name}</CardTitle>
                             {contact.company && (
                               <CardDescription className="flex items-center gap-1 mt-1">
                                 <Building2 className="h-3 w-3" />

@@ -645,9 +645,8 @@ def create_category():
         current_user_id = int(get_jwt_identity())
         current_user = User.query.get(current_user_id)
         
-        # Only owners can create categories
-        if current_user.role != 'Propriétaire':
-            return jsonify({'message': 'Unauthorized'}), 403
+        # Allow all authenticated users to create categories
+        # Categories are needed for product management which all users can do
         
         data = request.get_json()
         
@@ -674,9 +673,7 @@ def update_category(category_id):
         current_user_id = int(get_jwt_identity())
         current_user = User.query.get(current_user_id)
         
-        # Only owners can update categories
-        if current_user.role != 'Propriétaire':
-            return jsonify({'message': 'Unauthorized'}), 403
+        # Allow all authenticated users to update categories
         
         category = Category.query.get_or_404(category_id)
         data = request.get_json()
@@ -693,26 +690,25 @@ def update_category(category_id):
         db.session.rollback()
         print(f"Error in update_category: {str(e)}")
         return jsonify({'message': f'Error updating category: {str(e)}'}), 500
-    
-    db.session.commit()
-    
-    return jsonify({'message': 'Category updated successfully'})
 
 @app.route('/api/categories/<int:category_id>', methods=['DELETE'])
 @jwt_required()
 def delete_category(category_id):
-    current_user_id = int(get_jwt_identity())
-    current_user = User.query.get(current_user_id)
-    
-    # Only owners can delete categories
-    if current_user.role != 'Propriétaire':
-        return jsonify({'message': 'Unauthorized'}), 403
-    
-    category = Category.query.get_or_404(category_id)
-    db.session.delete(category)
-    db.session.commit()
-    
-    return jsonify({'message': 'Category deleted successfully'})
+    try:
+        current_user_id = int(get_jwt_identity())
+        current_user = User.query.get(current_user_id)
+        
+        # Allow all authenticated users to delete categories
+        
+        category = Category.query.get_or_404(category_id)
+        db.session.delete(category)
+        db.session.commit()
+        
+        return jsonify({'message': 'Category deleted successfully'})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error in delete_category: {str(e)}")
+        return jsonify({'message': f'Error deleting category: {str(e)}'}), 500
 
 # Product Routes
 @app.route('/api/products', methods=['GET'])
