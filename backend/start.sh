@@ -23,6 +23,15 @@ if [ $? -ne 0 ]; then
     echo "❌ Database reset failed! Continuing anyway..."
 fi
 
+# Run Invoice stand_id migration (make it nullable for direct invoice creation)
+echo ""
+echo "🔄 Running invoice migration (stand_id nullable)..."
+python auto_migrate_invoice.py
+
+if [ $? -ne 0 ]; then
+    echo "⚠️  Invoice migration had issues, continuing anyway..."
+fi
+
 # Initialize database with sample data
 echo ""
 echo "🗄️  Initializing database with sample data..."
