@@ -16,7 +16,7 @@ When you deploy/redeploy the backend, the system automatically creates:
 
 | Role      | Email               | Password     |
 | --------- | ------------------- | ------------ |
-| Admin     | admin@event.com     | admin123     |
+   | Admin     | admin@event.com     | admin123     |
 | Logistics | logistics@event.com | logistics123 |
 | Finance   | finance@event.com   | finance123   |
 

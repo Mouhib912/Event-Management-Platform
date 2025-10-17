@@ -16,6 +16,8 @@ import { toast } from 'sonner';
 const Invoices = () => {
   const [invoices, setInvoices] = useState([]);
   const [stands, setStands] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [signingDialogOpen, setSigningDialogOpen] = useState(false);
@@ -25,8 +27,10 @@ const Invoices = () => {
   const [editClientInfo, setEditClientInfo] = useState(false);
   const [editCompanyInfo, setEditCompanyInfo] = useState(false);
   const [selectedStandItems, setSelectedStandItems] = useState([]);
+  const [useStand, setUseStand] = useState(true); // Toggle between stand-based and direct creation
   const [formData, setFormData] = useState({
     stand_id: '',
+    client_id: '',
     client_name: '',
     client_email: '',
     client_phone: '',
@@ -49,9 +53,11 @@ const Invoices = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [invoicesData, standsData] = await Promise.all([
+      const [invoicesData, standsData, contactsData, productsData] = await Promise.all([
         apiService.getInvoices(),
-        apiService.getStands()
+        apiService.getStands(),
+        apiService.getContacts('all'),
+        apiService.getProducts()
       ]);
       
       setInvoices(invoicesData);
@@ -61,6 +67,13 @@ const Invoices = () => {
         stand.status === 'approved'
       );
       setStands(approvedStands);
+      
+      // Filter contacts to only show clients
+      const clientContacts = contactsData.filter(c => 
+        c.contact_type === 'client' || c.contact_type === 'both'
+      );
+      setContacts(clientContacts);
+      setProducts(productsData);
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Erreur lors du chargement des données');
@@ -80,6 +93,7 @@ const Invoices = () => {
         // Populate client fields from stand's client
         setFormData(prev => ({
           ...prev,
+          client_id: selectedStand.client.id || '',
           client_name: selectedStand.client.name || '',
           client_email: selectedStand.client.email || '',
           client_phone: selectedStand.client.phone || '',
@@ -90,6 +104,7 @@ const Invoices = () => {
         setSelectedClient(null);
         setFormData(prev => ({
           ...prev,
+          client_id: '',
           client_name: '',
           client_email: '',
           client_phone: '',
@@ -114,6 +129,68 @@ const Invoices = () => {
       } else {
         setSelectedStandItems([]);
       }
+    }
+    
+    // Handle direct client selection (when not using a stand)
+    if (field === 'client_id' && !useStand) {
+      const selectedContact = contacts.find(c => c.id === parseInt(value));
+      if (selectedContact) {
+        setSelectedClient(selectedContact);
+        setFormData(prev => ({
+          ...prev,
+          client_name: selectedContact.name || '',
+          client_email: selectedContact.email || '',
+          client_phone: selectedContact.phone || '',
+          client_address: selectedContact.address || '',
+          client_company: selectedContact.company || ''
+        }));
+      } else {
+        setSelectedClient(null);
+        setFormData(prev => ({
+          ...prev,
+          client_name: '',
+          client_email: '',
+          client_phone: '',
+          client_address: '',
+          client_company: ''
+        }));
+      }
+    }
+  };
+  
+  // Add new product line (for direct invoice creation)
+  const handleAddProduct = () => {
+    setSelectedStandItems(prev => [...prev, {
+      product_id: '',
+      product_name: '',
+      quantity: 1,
+      days: 1,
+      unit_price: 0,
+      factor: 1,
+      total_price: 0
+    }]);
+  };
+  
+  // Remove product line
+  const handleRemoveProduct = (index) => {
+    setSelectedStandItems(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  // Handle product selection in direct mode
+  const handleProductSelect = (index, productId) => {
+    const selectedProduct = products.find(p => p.id === parseInt(productId));
+    if (selectedProduct) {
+      setSelectedStandItems(prev => {
+        const updated = [...prev];
+        updated[index] = {
+          ...updated[index],
+          product_id: selectedProduct.id,
+          product_name: selectedProduct.name,
+          unit_price: selectedProduct.price,
+          total_price: updated[index].quantity * updated[index].days * selectedProduct.price * updated[index].factor
+        };
+        return updated;
+      });
     }
   };
 
@@ -157,47 +234,72 @@ const Invoices = () => {
 
   const handleCreateInvoice = async () => {
     try {
-      if (!formData.stand_id) {
+      // Validation
+      if (useStand && !formData.stand_id) {
         toast.error('Veuillez sélectionner un stand');
         return;
+      }
+      
+      if (!useStand) {
+        if (!formData.client_name) {
+          toast.error('Veuillez sélectionner ou entrer un client');
+          return;
+        }
+        if (selectedStandItems.length === 0) {
+          toast.error('Veuillez ajouter au moins un produit');
+          return;
+        }
+        // Validate all products have required fields
+        const invalidProducts = selectedStandItems.filter(item => 
+          !item.product_id || item.quantity <= 0 || item.unit_price <= 0
+        );
+        if (invalidProducts.length > 0) {
+          toast.error('Veuillez remplir tous les champs des produits');
+          return;
+        }
       }
 
       // Include modified products in the invoice data
       const invoiceData = {
         ...formData,
-        modified_items: selectedStandItems
+        modified_items: selectedStandItems,
+        use_stand: useStand
       };
 
       await apiService.createInvoice(invoiceData);
       toast.success('Devis créé avec succès!');
       
-      setDialogOpen(false);
-      setSelectedClient(null);
-      setEditClientInfo(false);
-      setEditCompanyInfo(false);
-      setSelectedStandItems([]);
-      setFormData({
-        stand_id: '',
-        client_name: '',
-        client_email: '',
-        client_phone: '',
-        client_address: '',
-        client_company: '',
-        company_name: 'Votre Entreprise',
-        company_address: '',
-        company_phone: '',
-        company_email: '',
-        remise: 0,
-        remise_type: 'percentage',
-        tva_percentage: 19,
-        product_factor: 1
-      });
-      
+      resetForm();
       loadData();
     } catch (error) {
       console.error('Error creating invoice:', error);
       toast.error('Erreur lors de la création du devis');
     }
+  };
+  
+  const resetForm = () => {
+    setDialogOpen(false);
+    setSelectedClient(null);
+    setEditClientInfo(false);
+    setEditCompanyInfo(false);
+    setSelectedStandItems([]);
+    setFormData({
+      stand_id: '',
+      client_id: '',
+      client_name: '',
+      client_email: '',
+      client_phone: '',
+      client_address: '',
+      client_company: '',
+      company_name: 'Votre Entreprise',
+      company_address: '',
+      company_phone: '',
+      company_email: '',
+      remise: 0,
+      remise_type: 'percentage',
+      tva_percentage: 19,
+      product_factor: 1
+    });
   };
 
   const handleSignDevis = (invoice) => {
@@ -297,30 +399,90 @@ const Invoices = () => {
             </DialogHeader>
             
             <div className="space-y-6">
-              {/* Stand Selection */}
-              <div>
-                <Label htmlFor="stand">Stand *</Label>
-                <Select
-                  value={formData.stand_id.toString()}
-                  onValueChange={(value) => handleInputChange('stand_id', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un stand" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {stands.map(stand => (
-                      <SelectItem key={stand.id} value={stand.id.toString()}>
-                        {stand.name} - {stand.total_amount.toFixed(2)} TND
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {stands.length === 0 && (
-                  <p className="text-sm text-amber-600 mt-1">
-                    Aucun stand approuvé disponible
-                  </p>
-                )}
+              {/* Creation Mode Toggle */}
+              <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg border-2">
+                <Label className="font-semibold">Mode de création:</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={useStand ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setUseStand(true);
+                      setSelectedStandItems([]);
+                      setSelectedClient(null);
+                    }}
+                  >
+                    À partir d'un Stand
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={!useStand ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => {
+                      setUseStand(false);
+                      setSelectedStandItems([]);
+                      setFormData(prev => ({ ...prev, stand_id: '' }));
+                    }}
+                  >
+                    Création Directe
+                  </Button>
+                </div>
               </div>
+
+              {/* Stand Selection (if using stand mode) */}
+              {useStand && (
+                <div>
+                  <Label htmlFor="stand">Stand *</Label>
+                  <Select
+                    value={formData.stand_id.toString()}
+                    onValueChange={(value) => handleInputChange('stand_id', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un stand" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stands.map(stand => (
+                        <SelectItem key={stand.id} value={stand.id.toString()}>
+                          {stand.name} - {stand.total_amount.toFixed(2)} TND
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {stands.length === 0 && (
+                    <p className="text-sm text-amber-600 mt-1">
+                      Aucun stand approuvé disponible
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Client Selection (if direct mode) */}
+              {!useStand && (
+                <div>
+                  <Label htmlFor="client">Client *</Label>
+                  <Select
+                    value={formData.client_id.toString()}
+                    onValueChange={(value) => handleInputChange('client_id', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionner un client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {contacts.map(contact => (
+                        <SelectItem key={contact.id} value={contact.id.toString()}>
+                          {contact.name} {contact.company && `- ${contact.company}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {contacts.length === 0 && (
+                    <p className="text-sm text-amber-600 mt-1">
+                      Aucun client disponible. Créez un contact de type "Client" d'abord.
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Client Info (Editable) */}
               {selectedClient && (
@@ -520,30 +682,71 @@ const Invoices = () => {
 
               <Separator />
 
-              {/* Products Section - Editable */}
-              {selectedStandItems.length > 0 && (
+              {/* Products Section - For direct mode OR stand mode with items */}
+              {(!useStand || selectedStandItems.length > 0) && (
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Produits du Stand</h3>
-                  <p className="text-sm text-gray-600">
-                    Vous pouvez modifier la quantité, le prix unitaire et le facteur de chaque produit
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-lg">
+                        {useStand ? 'Produits du Stand' : 'Produits'}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {useStand 
+                          ? 'Vous pouvez modifier la quantité, le prix unitaire et le facteur de chaque produit'
+                          : 'Ajoutez les produits pour cette facture/devis'
+                        }
+                      </p>
+                    </div>
+                    {!useStand && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleAddProduct}
+                        variant="outline"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Ajouter Produit
+                      </Button>
+                    )}
+                  </div>
                   
                   <div className="border rounded-lg overflow-hidden">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Produit</TableHead>
+                          <TableHead>{useStand ? 'Produit' : 'Sélectionner Produit'}</TableHead>
                           <TableHead className="w-24">Quantité</TableHead>
                           <TableHead className="w-24">Jours</TableHead>
                           <TableHead className="w-32">Prix Unit. (TND)</TableHead>
                           <TableHead className="w-32">Facteur</TableHead>
                           <TableHead className="text-right">Total (TND)</TableHead>
+                          {!useStand && <TableHead className="w-16"></TableHead>}
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {selectedStandItems.map((item, index) => (
                           <TableRow key={index}>
-                            <TableCell className="font-medium">{item.product_name}</TableCell>
+                            <TableCell className="font-medium">
+                              {useStand ? (
+                                item.product_name
+                              ) : (
+                                <Select
+                                  value={item.product_id?.toString() || ''}
+                                  onValueChange={(value) => handleProductSelect(index, value)}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Choisir..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {products.map(product => (
+                                      <SelectItem key={product.id} value={product.id.toString()}>
+                                        {product.name} - {product.price} TND
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </TableCell>
                             <TableCell>
                               <Input
                                 type="number"
@@ -589,11 +792,30 @@ const Invoices = () => {
                             <TableCell className="text-right font-semibold">
                               {item.total_price.toFixed(2)}
                             </TableCell>
+                            {!useStand && (
+                              <TableCell>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleRemoveProduct(index)}
+                                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            )}
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   </div>
+                  
+                  {selectedStandItems.length === 0 && !useStand && (
+                    <div className="text-center py-8 text-gray-500 border-2 border-dashed rounded-lg">
+                      <p>Aucun produit ajouté. Cliquez sur "Ajouter Produit" pour commencer.</p>
+                    </div>
+                  )}
 
                   {/* Total Summary */}
                   <Card className="bg-blue-50 border-blue-200">

@@ -178,7 +178,7 @@ class PurchaseItem(db.Model):
 class Invoice(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     invoice_number = db.Column(db.String(20), unique=True, nullable=False)
-    stand_id = db.Column(db.Integer, db.ForeignKey('stand.id'), nullable=False)
+    stand_id = db.Column(db.Integer, db.ForeignKey('stand.id'), nullable=True)  # Optional - can create invoices without stands
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)
     client_name = db.Column(db.String(100), nullable=False)
     client_email = db.Column(db.String(120))
@@ -1402,19 +1402,53 @@ def create_invoice():
     current_user = User.query.get(current_user_id)
     data = request.get_json()
     
-    # Verify stand exists and is approved
-    stand = Stand.query.get_or_404(data['stand_id'])
-    if stand.status != 'approved':
-        return jsonify({'error': 'Stand must be approved before creating invoice'}), 400
+    # Check creation mode - stand-based or direct
+    use_stand = data.get('use_stand', True)
+    
+    # Stand-based mode
+    if use_stand:
+        # Verify stand exists and is approved
+        stand = Stand.query.get_or_404(data['stand_id'])
+        if stand.status != 'approved':
+            return jsonify({'error': 'Stand must be approved before creating invoice'}), 400
+        
+        # Get client info from stand
+        client = None
+        if stand.client_id:
+            client = Client.query.get(stand.client_id)
+        
+        stand_id = data['stand_id']
+        client_id = stand.client_id
+        default_client_name = client.name if client else 'Client'
+        default_client_email = client.email if client else ''
+        default_client_phone = client.phone if client else ''
+        default_client_address = client.address if client else ''
+        default_client_company = client.company if client else ''
+    # Direct mode - no stand required
+    else:
+        stand = None
+        stand_id = None
+        client_id = data.get('client_id')
+        
+        # Get client info from contact if client_id provided
+        if client_id:
+            contact = Contact.query.get(client_id)
+            default_client_name = contact.name if contact else data.get('client_name', 'Client')
+            default_client_email = contact.email if contact else data.get('client_email', '')
+            default_client_phone = contact.phone if contact else data.get('client_phone', '')
+            default_client_address = contact.address if contact else data.get('client_address', '')
+            default_client_company = contact.company if contact else data.get('client_company', '')
+        else:
+            # Use provided client info directly
+            default_client_name = data.get('client_name', 'Client')
+            default_client_email = data.get('client_email', '')
+            default_client_phone = data.get('client_phone', '')
+            default_client_address = data.get('client_address', '')
+            default_client_company = data.get('client_company', '')
     
     # Generate devis number (will be converted to invoice number when approved)
     invoice_count = Invoice.query.count() + 1
     invoice_number = f"DEV-{datetime.now().year}-{invoice_count:04d}"
-    
-    # Get client info from stand
-    client = None
-    if stand.client_id:
-        client = Client.query.get(stand.client_id)
     
     # Get discount/remise values
     remise = float(data.get('remise', 0))
@@ -1428,10 +1462,13 @@ def create_invoice():
     if modified_items:
         # Use the modified items with individual factors
         subtotal = sum(item['total_price'] for item in modified_items)
-    else:
+    elif use_stand and stand:
         # Fallback to original stand total with global factor (backward compatibility)
         product_factor = float(data.get('product_factor', 1))
         subtotal = stand.total_amount * product_factor
+    else:
+        # Direct mode with no items
+        return jsonify({'error': 'No products provided for invoice'}), 400
     
     # Apply remise based on type
     if remise > 0:
@@ -1447,16 +1484,16 @@ def create_invoice():
     tva_amount = total_ht * (tva_percentage / 100)
     total_ttc = total_ht + tva_amount
     
-    # Use provided client info from form, fallback to client from stand
+    # Use provided client info from form, fallback to defaults
     invoice = Invoice(
         invoice_number=invoice_number,
-        stand_id=data['stand_id'],
-        client_id=stand.client_id,
-        client_name=data.get('client_name') or (client.name if client else 'Client'),
-        client_email=data.get('client_email') or (client.email if client else ''),
-        client_phone=data.get('client_phone') or (client.phone if client else ''),
-        client_address=data.get('client_address') or (client.address if client else ''),
-        client_company=data.get('client_company') or (client.company if client else ''),
+        stand_id=stand_id,
+        client_id=client_id,
+        client_name=data.get('client_name') or default_client_name,
+        client_email=data.get('client_email') or default_client_email,
+        client_phone=data.get('client_phone') or default_client_phone,
+        client_address=data.get('client_address') or default_client_address,
+        client_company=data.get('client_company') or default_client_company,
         total_ht=total_ht,
         tva_amount=tva_amount,
         total_ttc=total_ttc,
@@ -1531,7 +1568,7 @@ def update_invoice_status(invoice_id):
 # Invoice/Devis PDF Generation
 def generate_invoice_pdf(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
-    stand = invoice.stand
+    stand = invoice.stand if invoice.stand_id else None
     
     # Create PDF buffer
     buffer = io.BytesIO()
@@ -1608,9 +1645,13 @@ def generate_invoice_pdf(invoice_id):
     
     # ===== INVOICE INFO BOX =====
     doc_type_label = "DEVIS N°" if invoice.status == 'devis' else "FACTURE N°"
+    
+    # Include stand name only if associated with a stand
+    stand_info = f' | <b>STAND:</b> {stand.name}' if stand else ''
+    
     invoice_info_data = [
         [
-            Paragraph(f'<b>{doc_type_label}: {invoice.invoice_number}</b> | <b>DATE:</b> {invoice.created_at.strftime("%d/%m/%Y")} | <b>STAND:</b> {stand.name}', styles['Normal']),
+            Paragraph(f'<b>{doc_type_label}: {invoice.invoice_number}</b> | <b>DATE:</b> {invoice.created_at.strftime("%d/%m/%Y")}{stand_info}', styles['Normal']),
         ]
     ]
     
