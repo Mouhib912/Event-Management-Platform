@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Badge } from './ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { FileText, Plus, Download, CheckCircle, Clock, XCircle, User, Building2, Mail, Phone, MapPin, FileSignature, DollarSign, Search, Package } from 'lucide-react';
@@ -179,13 +179,29 @@ const Invoices = () => {
     if (selectedProduct) {
       setSelectedStandItems(prev => {
         const updated = [...prev];
-        updated[index] = {
-          ...updated[index],
-          product_id: selectedProduct.id,
-          product_name: selectedProduct.name,
-          unit_price: selectedProduct.price,
-          total_price: updated[index].quantity * updated[index].days * selectedProduct.price * updated[index].factor
-        };
+        
+        // If index equals array length, we're adding a new item
+        if (index >= updated.length) {
+          updated.push({
+            product_id: selectedProduct.id,
+            product_name: selectedProduct.name,
+            quantity: 1,
+            days: 1,
+            unit_price: selectedProduct.price,
+            factor: 1,
+            total_price: 1 * 1 * selectedProduct.price * 1
+          });
+        } else {
+          // Updating existing item
+          updated[index] = {
+            ...updated[index],
+            product_id: selectedProduct.id,
+            product_name: selectedProduct.name,
+            unit_price: selectedProduct.price,
+            total_price: (updated[index].quantity || 1) * (updated[index].days || 1) * selectedProduct.price * (updated[index].factor || 1)
+          };
+        }
+        
         return updated;
       });
     }
@@ -205,7 +221,10 @@ const Invoices = () => {
   };
 
   const calculateTotal = () => {
-    const subtotal = selectedStandItems.reduce((sum, item) => sum + item.total_price, 0);
+    // Safely calculate subtotal with fallback for missing or invalid items
+    const subtotal = selectedStandItems.reduce((sum, item) => {
+      return sum + (item?.total_price || 0);
+    }, 0);
     
     // Apply remise
     let totalHT = subtotal;
@@ -393,6 +412,9 @@ const Invoices = () => {
           <DialogContent className="max-w-6xl h-[95vh] flex flex-col p-0">
             <DialogHeader className="px-6 pt-6 pb-4 border-b">
               <DialogTitle>Créer un Nouveau Devis</DialogTitle>
+              <DialogDescription>
+                Créez un devis ou une facture pour vos clients
+              </DialogDescription>
             </DialogHeader>
             
             <div className="flex-1 overflow-y-auto px-6 py-4">
