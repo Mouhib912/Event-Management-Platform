@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Badge } from './ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { FileText, Plus, Download, CheckCircle, Clock, XCircle, User, Building2, Mail, Phone, MapPin, FileSignature, DollarSign, Search } from 'lucide-react';
+import { FileText, Plus, Download, CheckCircle, Clock, XCircle, User, Building2, Mail, Phone, MapPin, FileSignature, DollarSign, Search, Package } from 'lucide-react';
 import { Separator } from './ui/separator';
 import apiService from '../services/api';
 import { toast } from 'sonner';
@@ -160,24 +160,13 @@ const Invoices = () => {
   };
   
   // Filter products based on search
-  const filteredProducts = products.filter(product => 
-    productSearch === '' || 
-    product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
-    (product.category && product.category.toLowerCase().includes(productSearch.toLowerCase()))
-  );
-  
-  // Add new product line (for direct invoice creation)
-  const handleAddProduct = () => {
-    setSelectedStandItems(prev => [...prev, {
-      product_id: '',
-      product_name: '',
-      quantity: 1,
-      days: 1,
-      unit_price: 0,
-      factor: 1,
-      total_price: 0
-    }]);
-  };
+  const filteredProducts = products.filter(product => {
+    if (productSearch === '') return true;
+    const searchLower = productSearch.toLowerCase();
+    const nameMatch = product.name?.toLowerCase().includes(searchLower);
+    const categoryMatch = product.category_name?.toLowerCase().includes(searchLower);
+    return nameMatch || categoryMatch;
+  });
   
   // Remove product line
   const handleRemoveProduct = (index) => {
@@ -702,41 +691,97 @@ const Invoices = () => {
                       <p className="text-sm text-gray-600">
                         {useStand 
                           ? 'Vous pouvez modifier la quantité, le prix unitaire et le facteur de chaque produit'
-                          : 'Ajoutez les produits pour cette facture/devis'
+                          : 'Recherchez et ajoutez des produits pour cette facture/devis'
                         }
                       </p>
                     </div>
-                    {!useStand && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={handleAddProduct}
-                        variant="outline"
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Ajouter Produit
-                      </Button>
-                    )}
                   </div>
 
-                  {/* Product Search Input for Direct Mode */}
+                  {/* Product Search and Add for Direct Mode */}
                   {!useStand && (
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        placeholder="Rechercher un produit par nom ou catégorie..."
-                        value={productSearch}
-                        onChange={(e) => setProductSearch(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="space-y-4">
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Input
+                              placeholder="Rechercher un produit par nom ou catégorie..."
+                              value={productSearch}
+                              onChange={(e) => setProductSearch(e.target.value)}
+                              className="pl-10"
+                            />
+                          </div>
+                          
+                          {productSearch && (
+                            <div className="max-h-60 overflow-y-auto border rounded-lg">
+                              {filteredProducts.length === 0 ? (
+                                <div className="p-8 text-center text-gray-500">
+                                  <p className="font-medium">Aucun produit trouvé</p>
+                                  <p className="text-sm mt-1">Essayez un autre mot-clé</p>
+                                </div>
+                              ) : (
+                                <div className="divide-y">
+                                  {filteredProducts.map(product => (
+                                    <div
+                                      key={product.id}
+                                      className="p-3 hover:bg-slate-50 cursor-pointer transition-colors"
+                                      onClick={() => {
+                                        handleProductSelect(selectedStandItems.length, product.id);
+                                        setProductSearch('');
+                                      }}
+                                    >
+                                      <div className="flex justify-between items-start">
+                                        <div className="flex-1">
+                                          <h4 className="font-medium text-sm">{product.name}</h4>
+                                          <p className="text-xs text-gray-500 mt-1">
+                                            {product.category_name && `${product.category_name} • `}
+                                            {product.unit && `${product.unit} • `}
+                                            {product.pricing_type}
+                                          </p>
+                                        </div>
+                                        <div className="text-right ml-4">
+                                          <p className="font-semibold text-slate-700">{product.price} TND</p>
+                                          <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            className="mt-1 h-7"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleProductSelect(selectedStandItems.length, product.id);
+                                              setProductSearch('');
+                                            }}
+                                          >
+                                            <Plus className="h-3 w-3 mr-1" />
+                                            Ajouter
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
+                          {!productSearch && (
+                            <div className="text-center py-6 text-gray-500">
+                              <Package className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                              <p className="text-sm">Commencez à taper pour rechercher un produit</p>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
                   )}
                   
+                  {/* Products Table */}
+                  {selectedStandItems.length > 0 && (
                   <div className="border rounded-lg overflow-hidden">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>{useStand ? 'Produit' : 'Sélectionner Produit'}</TableHead>
+                          <TableHead>Produit</TableHead>
                           <TableHead className="w-24">Quantité</TableHead>
                           <TableHead className="w-24">Jours</TableHead>
                           <TableHead className="w-32">Prix Unit. (TND)</TableHead>
@@ -749,39 +794,14 @@ const Invoices = () => {
                         {selectedStandItems.map((item, index) => (
                           <TableRow key={index}>
                             <TableCell className="font-medium">
-                              {useStand ? (
-                                item.product_name
-                              ) : (
-                                <Select
-                                  value={item.product_id?.toString() || ''}
-                                  onValueChange={(value) => handleProductSelect(index, value)}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Choisir..." />
-                                  </SelectTrigger>
-                                  <SelectContent className="max-h-[300px]">
-                                    {filteredProducts.length === 0 ? (
-                                      <div className="p-4 text-center text-gray-500">
-                                        <p>Aucun produit trouvé</p>
-                                        {productSearch && (
-                                          <p className="text-xs mt-1">Essayez un autre mot-clé</p>
-                                        )}
-                                      </div>
-                                    ) : (
-                                      filteredProducts.map(product => (
-                                        <SelectItem key={product.id} value={product.id.toString()}>
-                                          <div className="flex flex-col">
-                                            <span className="font-medium">{product.name}</span>
-                                            <span className="text-xs text-gray-500">
-                                              {product.category && `${product.category} • `}{product.price} TND
-                                            </span>
-                                          </div>
-                                        </SelectItem>
-                                      ))
-                                    )}
-                                  </SelectContent>
-                                </Select>
-                              )}
+                              <div>
+                                <div className="font-medium">{item.product_name || 'Produit non sélectionné'}</div>
+                                {!useStand && item.product_id && (
+                                  <div className="text-xs text-gray-500 mt-1">
+                                    ID: {item.product_id}
+                                  </div>
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell>
                               <Input
@@ -846,6 +866,7 @@ const Invoices = () => {
                       </TableBody>
                     </Table>
                   </div>
+                  )}
                   
                   {selectedStandItems.length === 0 && !useStand && (
                     <div className="text-center py-8 text-gray-500 border-2 border-dashed rounded-lg">
