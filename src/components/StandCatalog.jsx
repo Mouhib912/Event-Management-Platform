@@ -233,8 +233,8 @@ export default function StandCatalog() {
 
       {/* Stand Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
-        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b">
             <DialogTitle>{selectedStand?.name}</DialogTitle>
             <DialogDescription>
               Créé par {selectedStand?.creator} le {selectedStand && new Date(selectedStand.createdAt).toLocaleDateString('fr-FR')}
@@ -242,6 +242,8 @@ export default function StandCatalog() {
           </DialogHeader>
           
           {selectedStand && (
+            <>
+            <div className="flex-1 overflow-y-auto px-6 py-4">
             <div className="space-y-4">
               {/* Summary */}
               <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
@@ -313,6 +315,8 @@ export default function StandCatalog() {
                 </Button>
               </div>
             </div>
+            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>

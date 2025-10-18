@@ -208,11 +208,12 @@ const Contacts = () => {
               Nouveau Contact
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
+          <DialogContent className="max-w-2xl h-[90vh] flex flex-col p-0">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b">
               <DialogTitle>{editingContact ? 'Modifier le Contact' : 'Nouveau Contact'}</DialogTitle>
             </DialogHeader>
 
+            <div className="flex-1 overflow-y-auto px-6 py-4">
             <div className="space-y-4">
               {/* Basic Information */}
               <div className="grid grid-cols-2 gap-4">
@@ -343,6 +344,7 @@ const Contacts = () => {
                   {editingContact ? 'Mettre à jour' : 'Créer'}
                 </Button>
               </div>
+            </div>
             </div>
           </DialogContent>
         </Dialog>

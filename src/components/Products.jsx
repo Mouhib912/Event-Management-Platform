@@ -365,8 +365,8 @@ export default function Products() {
                   Nouveau Produit
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
+              <DialogContent className="max-w-2xl h-[90vh] flex flex-col p-0">
+                <DialogHeader className="px-6 pt-6 pb-4 border-b">
                   <DialogTitle>
                     {editingProduct ? 'Modifier Produit' : 'Nouveau Produit'}
                   </DialogTitle>
@@ -375,7 +375,8 @@ export default function Products() {
                   </DialogDescription>
                 </DialogHeader>
               
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="flex-1 overflow-y-auto px-6 py-4">
+              <form onSubmit={handleSubmit} className="space-y-4" id="product-form">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nom du produit *</Label>
                   <Input
@@ -481,6 +482,7 @@ export default function Products() {
                   </Button>
                 </DialogFooter>
               </form>
+              </div>
             </DialogContent>
           </Dialog>
           </div>

@@ -195,14 +195,15 @@ const Achat = () => {
               Nouveau Bon de Commande
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
+          <DialogContent className="max-w-3xl h-[90vh] flex flex-col p-0">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b">
               <DialogTitle>Créer un Bon de Commande</DialogTitle>
               <DialogDescription>
                 Sélectionnez un fournisseur et ajoutez des produits à commander
               </DialogDescription>
             </DialogHeader>
             
+            <div className="flex-1 overflow-y-auto px-6 py-4">
             <div className="space-y-4">
               {/* Supplier Selection */}
               <div className="space-y-2">
@@ -336,6 +337,7 @@ const Achat = () => {
                   {isLoading ? 'Création...' : 'Créer le Bon de Commande'}
                 </Button>
               </div>
+            </div>
             </div>
           </DialogContent>
         </Dialog>

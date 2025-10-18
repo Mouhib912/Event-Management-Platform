@@ -32,7 +32,7 @@ If the migration script doesn't work on Render, you'll need to:
 
 ```sql
 -- For PostgreSQL
-ALTER TABLE invoice 
+ALTER TABLE invoice
 ALTER COLUMN stand_id DROP NOT NULL;
 
 -- Verify the change
@@ -49,12 +49,14 @@ OR if using SQLite:
 ## 📋 Deployment Checklist
 
 ### Before Deployment
+
 - [x] Code pushed to GitHub (`main` branch)
 - [x] Local testing completed
 - [x] Migration script tested locally
 - [x] Documentation created
 
 ### On Render
+
 - [ ] Backend automatic deployment triggered (check Render dashboard)
 - [ ] Frontend automatic deployment triggered (check Render dashboard)
 - [ ] Wait for both deployments to complete (~5-10 minutes)
@@ -62,6 +64,7 @@ OR if using SQLite:
 - [ ] Verify migration successful
 
 ### After Deployment
+
 - [ ] Test stand-based invoice creation (existing feature)
 - [ ] Test direct invoice creation (new feature)
 - [ ] Verify PDF generation for both types
@@ -71,14 +74,18 @@ OR if using SQLite:
 ## 🔍 What to Monitor
 
 ### Backend Logs
+
 Watch for:
+
 - ✅ `* Running on http://...` (server started)
 - ✅ Migration success message
 - ❌ Any database errors
 - ❌ Import errors
 
 ### Frontend Build
+
 Watch for:
+
 - ✅ `build complete` message
 - ✅ Assets generated
 - ❌ Compilation errors
@@ -86,6 +93,7 @@ Watch for:
 ## 🧪 Testing After Deployment
 
 ### Test 1: Stand-Based Invoice (Regression Test)
+
 1. Go to Factures/Devis page
 2. Click "Créer Devis/Facture"
 3. Select "À partir d'un Stand"
@@ -96,6 +104,7 @@ Watch for:
 **Expected**: Works exactly as before
 
 ### Test 2: Direct Invoice (New Feature)
+
 1. Go to Factures/Devis page
 2. Click "Créer Devis/Facture"
 3. Select "Création Directe"
@@ -107,6 +116,7 @@ Watch for:
 **Expected**: Invoice created without stand, PDF generated
 
 ### Test 3: Database Integrity
+
 1. Check that existing invoices still display
 2. Verify stand-based invoices show stand name
 3. Verify direct invoices work without stand
@@ -114,26 +124,34 @@ Watch for:
 ## 🐛 Troubleshooting
 
 ### Issue: "table invoice_new already exists"
-**Solution**: 
+
+**Solution**:
+
 ```bash
 python -c "import sqlite3; conn = sqlite3.connect('instance/event_management.db'); conn.execute('DROP TABLE IF EXISTS invoice_new'); conn.commit()"
 python migrate_invoice_stand_nullable.py
 ```
 
 ### Issue: "No module named 'flask_sqlalchemy'"
+
 **Solution**: Dependencies should auto-install on Render. Check `requirements.txt` is present.
 
 ### Issue: Frontend build fails
+
 **Solution**: Check that `package.json` has all dependencies. Render should run `npm install` automatically.
 
 ### Issue: 500 error on invoice creation
-**Solution**: 
+
+**Solution**:
+
 1. Check Render backend logs
 2. Verify migration completed successfully
 3. Check that `stand_id` is nullable in database
 
 ### Issue: "Cannot read property 'name' of null" in PDF
+
 **Solution**: This is expected for direct invoices. The code already handles this with:
+
 ```python
 stand_info = f' | <b>STAND:</b> {stand.name}' if stand else ''
 ```
@@ -161,6 +179,7 @@ database:
 Render should automatically detect the push and start deploying:
 
 1. **Backend** (Flask):
+
    - Builds from `backend/` directory
    - Runs `pip install -r requirements.txt`
    - Starts with `python app.py` or `gunicorn`
@@ -182,6 +201,7 @@ Render should automatically detect the push and start deploying:
 ## 🔗 Post-Deployment URLs
 
 After deployment completes, test at:
+
 - Frontend: `https://your-app.onrender.com`
 - Backend API: `https://your-api.onrender.com/api/invoices`
 
@@ -210,6 +230,7 @@ You'll know the deployment is successful when:
 ## 🎉 Feature Is Live!
 
 Once deployed, users can:
+
 - Create invoices from stands (as before)
 - Create invoices directly without stands (new!)
 - Mix both workflows as needed

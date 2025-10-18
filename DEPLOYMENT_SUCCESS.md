@@ -12,13 +12,16 @@
 ## 📦 What Was Deployed
 
 ### New Feature: Direct Invoice Creation
+
 Create invoices and quotes without requiring a stand!
 
 **Two Creation Modes**:
+
 1. **Stand-Based** (existing) - Quick event-based invoices
 2. **Direct** (NEW!) - Flexible one-off sales and custom quotes
 
 ### Files Changed (7 files)
+
 ```
 ✨ NEW FILES:
    📄 DIRECT_INVOICE_FEATURE.md              (Technical docs)
@@ -44,21 +47,25 @@ Render will **automatically** deploy the code changes, but you **must manually**
 #### Step-by-Step:
 
 1. **Wait for Render Auto-Deploy** (~5-10 minutes)
+
    - Check your Render dashboard
    - Both services should show "Live" status
 
 2. **Open Render Shell** (for backend service)
+
    - Go to https://dashboard.render.com
    - Click on `event-management-backend`
    - Click **Shell** tab at the top
 
 3. **Run Migration Commands**:
+
    ```bash
    cd backend
    python migrate_invoice_stand_nullable.py
    ```
 
 4. **Confirm Migration**:
+
    - Type `yes` when prompted
    - Wait for "✅ Migration completed successfully!"
 
@@ -73,6 +80,7 @@ Render will **automatically** deploy the code changes, but you **must manually**
 After migration completes, test these scenarios:
 
 ### ✅ Test 1: Existing Functionality (Regression)
+
 - [ ] Login works
 - [ ] Dashboard displays
 - [ ] Products page loads
@@ -82,6 +90,7 @@ After migration completes, test these scenarios:
 - [ ] PDF generation works for existing invoices
 
 ### ✅ Test 2: New Direct Invoice Feature
+
 - [ ] Toggle between modes appears
 - [ ] "Création Directe" button works
 - [ ] Client dropdown populates
@@ -100,6 +109,7 @@ After migration completes, test these scenarios:
 ## 📊 Current Status
 
 ### ✅ Completed Locally
+
 - [x] Feature development
 - [x] Local testing
 - [x] Database migration (local)
@@ -108,10 +118,12 @@ After migration completes, test these scenarios:
 - [x] Push to GitHub
 
 ### 🔄 In Progress (Render)
+
 - [ ] Automatic backend deployment (~3-5 min)
 - [ ] Automatic frontend deployment (~2-4 min)
 
 ### ⏳ Pending (Manual)
+
 - [ ] Run migration on Render database
 - [ ] Test both invoice creation modes
 - [ ] Verify production functionality
@@ -121,11 +133,13 @@ After migration completes, test these scenarios:
 ## 🎯 What Users Will See
 
 ### Before Migration:
+
 - ❌ Error when trying direct mode
 - ⚠️ "stand_id cannot be null" errors
 - 🚫 Feature appears but doesn't work
 
 ### After Migration:
+
 - ✅ Toggle between stand/direct modes
 - ✅ Create invoices without stands
 - ✅ All features working perfectly
@@ -174,18 +188,21 @@ After migration completes, test these scenarios:
 ## 💡 Pro Tips
 
 ### For Testing:
+
 1. Test stand mode first (should work exactly as before)
 2. Then test direct mode (new feature)
 3. Create both types and compare PDFs
 4. Try edge cases (empty products, zero prices)
 
 ### For Users:
+
 1. Use **stand mode** for recurring event setups
 2. Use **direct mode** for one-off quotes
 3. Mix both modes as needed
 4. All invoices tracked in same list
 
 ### For Troubleshooting:
+
 1. Check Render logs first
 2. Verify migration ran successfully
 3. Test in browser incognito mode (clear cache)
@@ -211,15 +228,15 @@ You'll know everything is working when:
 
 ## 🚀 Deploy Timeline
 
-| Step | Time | Status |
-|------|------|--------|
-| Code Push | 0 min | ✅ Done |
-| Render Detect | 1-2 min | 🔄 Auto |
-| Backend Deploy | 3-5 min | 🔄 Auto |
-| Frontend Deploy | 2-4 min | 🔄 Auto |
-| **Manual Migration** | 1 min | ⏳ **Required** |
-| Testing | 5-10 min | ⏳ Manual |
-| **Total** | **~15-25 min** | 🎯 In Progress |
+| Step                 | Time           | Status          |
+| -------------------- | -------------- | --------------- |
+| Code Push            | 0 min          | ✅ Done         |
+| Render Detect        | 1-2 min        | 🔄 Auto         |
+| Backend Deploy       | 3-5 min        | 🔄 Auto         |
+| Frontend Deploy      | 2-4 min        | 🔄 Auto         |
+| **Manual Migration** | 1 min          | ⏳ **Required** |
+| Testing              | 5-10 min       | ⏳ Manual       |
+| **Total**            | **~15-25 min** | 🎯 In Progress  |
 
 ---
 
@@ -240,6 +257,7 @@ If you encounter issues:
 ## 🎊 Congratulations!
 
 You've successfully deployed a major new feature:
+
 - ✨ More flexible invoice creation
 - 🚀 Better user experience
 - 💼 Support for one-off sales

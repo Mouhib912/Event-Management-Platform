@@ -7,9 +7,11 @@ The invoice migration (`stand_id` nullable) is now configured to run **automatic
 ## 📋 What Was Changed
 
 ### 1. New Auto-Migration Script
+
 **File**: `backend/auto_migrate_invoice.py`
 
 This script:
+
 - ✅ Checks if migration is needed
 - ✅ Detects current database schema (simple or extended)
 - ✅ Makes `stand_id` nullable in Invoice table
@@ -18,9 +20,11 @@ This script:
 - ✅ Skips if already applied
 
 ### 2. Updated Startup Script
+
 **File**: `backend/start.sh`
 
 Added migration step in startup sequence:
+
 ```bash
 1. Reset database schema (existing)
 2. 🆕 Run invoice migration (NEW!)
@@ -51,12 +55,14 @@ Added migration step in startup sequence:
 ## 🎯 Benefits
 
 ### Before (Manual):
+
 - ❌ Had to manually run migration in Render shell
 - ❌ Easy to forget
 - ❌ Feature wouldn't work until migration run
 - ❌ Required technical knowledge
 
 ### After (Automatic):
+
 - ✅ Migration runs automatically on deploy
 - ✅ No manual steps required
 - ✅ Feature works immediately after deployment
@@ -109,6 +115,7 @@ OR if applying for first time:
 ## 🎉 No Manual Steps Required!
 
 ### Before This Update:
+
 ```
 1. Push code to GitHub
 2. Wait for Render deploy
@@ -118,6 +125,7 @@ OR if applying for first time:
 ```
 
 ### After This Update:
+
 ```
 1. Push code to GitHub
 2. Wait for Render deploy
@@ -127,21 +135,25 @@ OR if applying for first time:
 ## 🛡️ Safety Features
 
 ### Idempotent
+
 - Safe to run multiple times
 - Checks if already applied before running
 - Won't duplicate work or corrupt data
 
 ### Error Handling
+
 - Continues deployment even if migration fails
 - Logs clear error messages
 - Won't crash the application
 
 ### Data Preservation
+
 - All existing invoices preserved
 - Foreign key relationships maintained
 - No data loss
 
 ### Rollback Safe
+
 - Old table only dropped after successful migration
 - Can manually revert if needed
 
@@ -150,6 +162,7 @@ OR if applying for first time:
 ### Local Testing:
 
 1. Reset your local database:
+
    ```bash
    cd backend
    python reset_db.py
@@ -157,11 +170,13 @@ OR if applying for first time:
    ```
 
 2. Run migration manually:
+
    ```bash
    python auto_migrate_invoice.py
    ```
 
 3. Expected output:
+
    ```
    🔄 Invoice Migration - Make stand_id nullable
      🔄 Applying migration - making stand_id nullable...
@@ -169,6 +184,7 @@ OR if applying for first time:
    ```
 
 4. Run again (should skip):
+
    ```bash
    python auto_migrate_invoice.py
    ```
@@ -206,11 +222,13 @@ After deploying, check Render logs for:
 ## 🚨 Troubleshooting
 
 ### Migration Shows Warning
+
 ```
 ⚠️  Invoice migration had issues, continuing anyway...
 ```
 
 **Likely Causes**:
+
 1. Database doesn't exist yet (normal on first deploy)
 2. Invoice table doesn't exist yet (normal on first deploy)
 3. Migration already applied (normal on redeployment)
@@ -218,22 +236,26 @@ After deploying, check Render logs for:
 **Action**: Check full logs for details, usually not a problem.
 
 ### Migration Fails to Apply
+
 ```
 ⚠️  Migration error: [error message]
 ```
 
-**Action**: 
+**Action**:
+
 1. Check Render logs for specific error
 2. Verify database is accessible
 3. Can manually run in Render shell as fallback
 4. Contact support if persists
 
 ### Feature Still Not Working After Deploy
+
 ```
 Error: NOT NULL constraint failed: invoice.stand_id
 ```
 
 **Action**:
+
 1. Check migration actually ran in logs
 2. Manually run in Render shell:
    ```bash
@@ -256,11 +278,13 @@ docs/
 ## 🎊 Summary
 
 ### What Changed:
+
 - ✨ Added automatic migration on Render startup
 - ✨ No manual intervention required
 - ✨ Safe, idempotent, error-tolerant
 
 ### What You Need to Do:
+
 1. ✅ Push this update to GitHub (next step)
 2. ✅ Wait for Render to deploy (~5-10 min)
 3. ✅ Verify in logs that migration ran
@@ -268,6 +292,7 @@ docs/
 5. ✅ Done! 🎉
 
 ### What Happens Automatically:
+
 - ✅ Migration runs on every deploy
 - ✅ Checks if needed before applying
 - ✅ Preserves all data

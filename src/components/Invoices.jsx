@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Badge } from './ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { FileText, Plus, Download, CheckCircle, Clock, XCircle, User, Building2, Mail, Phone, MapPin, FileSignature, DollarSign } from 'lucide-react';
+import { FileText, Plus, Download, CheckCircle, Clock, XCircle, User, Building2, Mail, Phone, MapPin, FileSignature, DollarSign, Search } from 'lucide-react';
 import { Separator } from './ui/separator';
 import apiService from '../services/api';
 import { toast } from 'sonner';
@@ -28,6 +28,7 @@ const Invoices = () => {
   const [editCompanyInfo, setEditCompanyInfo] = useState(false);
   const [selectedStandItems, setSelectedStandItems] = useState([]);
   const [useStand, setUseStand] = useState(true); // Toggle between stand-based and direct creation
+  const [productSearch, setProductSearch] = useState(''); // Search filter for products
   const [formData, setFormData] = useState({
     stand_id: '',
     client_id: '',
@@ -157,6 +158,13 @@ const Invoices = () => {
       }
     }
   };
+  
+  // Filter products based on search
+  const filteredProducts = products.filter(product => 
+    productSearch === '' || 
+    product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+    (product.category && product.category.toLowerCase().includes(productSearch.toLowerCase()))
+  );
   
   // Add new product line (for direct invoice creation)
   const handleAddProduct = () => {
@@ -393,12 +401,13 @@ const Invoices = () => {
               Créer un Devis
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
+          <DialogContent className="max-w-6xl h-[95vh] flex flex-col p-0">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b">
               <DialogTitle>Créer un Nouveau Devis</DialogTitle>
             </DialogHeader>
             
-            <div className="space-y-6">
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+              <div className="space-y-6">
               {/* Creation Mode Toggle */}
               <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg border-2">
                 <Label className="font-semibold">Mode de création:</Label>
@@ -709,6 +718,19 @@ const Invoices = () => {
                       </Button>
                     )}
                   </div>
+
+                  {/* Product Search Input for Direct Mode */}
+                  {!useStand && (
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="Rechercher un produit par nom ou catégorie..."
+                        value={productSearch}
+                        onChange={(e) => setProductSearch(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  )}
                   
                   <div className="border rounded-lg overflow-hidden">
                     <Table>
@@ -737,12 +759,26 @@ const Invoices = () => {
                                   <SelectTrigger>
                                     <SelectValue placeholder="Choisir..." />
                                   </SelectTrigger>
-                                  <SelectContent>
-                                    {products.map(product => (
-                                      <SelectItem key={product.id} value={product.id.toString()}>
-                                        {product.name} - {product.price} TND
-                                      </SelectItem>
-                                    ))}
+                                  <SelectContent className="max-h-[300px]">
+                                    {filteredProducts.length === 0 ? (
+                                      <div className="p-4 text-center text-gray-500">
+                                        <p>Aucun produit trouvé</p>
+                                        {productSearch && (
+                                          <p className="text-xs mt-1">Essayez un autre mot-clé</p>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      filteredProducts.map(product => (
+                                        <SelectItem key={product.id} value={product.id.toString()}>
+                                          <div className="flex flex-col">
+                                            <span className="font-medium">{product.name}</span>
+                                            <span className="text-xs text-gray-500">
+                                              {product.category && `${product.category} • `}{product.price} TND
+                                            </span>
+                                          </div>
+                                        </SelectItem>
+                                      ))
+                                    )}
                                   </SelectContent>
                                 </Select>
                               )}
@@ -904,7 +940,11 @@ const Invoices = () => {
                   </div>
                 </div>
               </div>
+              </div>
+            </div>
 
+            {/* Fixed Footer with Action Buttons */}
+            <div className="border-t px-6 py-4 bg-white">
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setDialogOpen(false)}>
                   Annuler
