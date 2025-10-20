@@ -56,23 +56,45 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
 
-# Unified Contact Model (replaces Client and Supplier)
+# Unified Contact Model - Now supports Person and Enterprise types
 class Contact(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    contact_person = db.Column(db.String(100))
+    
+    # Contact Type: 'person' or 'enterprise'
+    contact_nature = db.Column(db.String(20), nullable=False, default='person')  # 'person' or 'enterprise'
+    
+    # Common fields
+    name = db.Column(db.String(100), nullable=False)  # Person name OR Enterprise name
     email = db.Column(db.String(120))
     phone = db.Column(db.String(20))
     address = db.Column(db.Text)
-    company = db.Column(db.String(100))
     contact_type = db.Column(db.String(20), default='client')  # 'client', 'fournisseur', 'both'
-    speciality = db.Column(db.String(200))  # Area of expertise (for fournisseurs)
     status = db.Column(db.String(20), default='Actif')
-    notes = db.Column(db.Text)  # General notes about the contact
+    notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     
+    # Enterprise-specific fields (only used when contact_nature='enterprise')
+    matricule_fiscal = db.Column(db.String(50))  # Tax ID number
+    code_tva = db.Column(db.String(50))  # VAT code
+    code_douane = db.Column(db.String(50))  # Customs code
+    registre_commerce = db.Column(db.String(50))  # Commerce registry
+    legal_form = db.Column(db.String(50))  # Legal form (SARL, SA, etc.)
+    capital = db.Column(db.Float)  # Capital social
+    website = db.Column(db.String(200))
+    
+    # Person-specific fields (only used when contact_nature='person')
+    enterprise_id = db.Column(db.Integer, db.ForeignKey('contact.id'), nullable=True)  # Link person to enterprise
+    position = db.Column(db.String(100))  # Job title/position
+    
+    # Relationships
     creator = db.relationship('User', backref='created_contacts')
+    enterprise = db.relationship('Contact', remote_side=[id], backref='employees', foreign_keys=[enterprise_id])
+    
+    # Legacy field for backward compatibility (deprecated)
+    contact_person = db.Column(db.String(100))  # OLD: contact person name (for enterprises)
+    company = db.Column(db.String(100))  # OLD: company field (deprecated)
+    speciality = db.Column(db.String(200))  # Area of expertise (for fournisseurs)
 
 class Supplier(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -399,28 +421,67 @@ def delete_user(user_id):
 @jwt_required()
 def get_contacts():
     try:
-        # Get filter parameter
+        # Get filter parameters
         contact_type = request.args.get('type', 'all')  # 'all', 'client', 'fournisseur', 'both'
+        contact_nature = request.args.get('nature', 'all')  # 'all', 'person', 'enterprise'
         
-        if contact_type == 'all':
-            contacts = Contact.query.all()
-        else:
-            contacts = Contact.query.filter_by(contact_type=contact_type).all()
+        # Build query
+        query = Contact.query
         
-        return jsonify([{
-            'id': c.id,
-            'name': c.name,
-            'contact_person': c.contact_person,
-            'email': c.email,
-            'phone': c.phone,
-            'address': c.address,
-            'company': c.company,
-            'contact_type': c.contact_type,
-            'speciality': c.speciality,
-            'status': c.status if hasattr(c, 'status') else 'Actif',
-            'notes': c.notes if hasattr(c, 'notes') else '',
-            'created_at': c.created_at.isoformat() if c.created_at else None
-        } for c in contacts])
+        # Filter by contact type (client/supplier)
+        if contact_type != 'all':
+            query = query.filter_by(contact_type=contact_type)
+        
+        # Filter by contact nature (person/enterprise)
+        if contact_nature != 'all':
+            query = query.filter_by(contact_nature=contact_nature)
+        
+        contacts = query.all()
+        
+        result = []
+        for c in contacts:
+            contact_data = {
+                'id': c.id,
+                'name': c.name,
+                'email': c.email,
+                'phone': c.phone,
+                'address': c.address,
+                'contact_type': c.contact_type,
+                'contact_nature': c.contact_nature if hasattr(c, 'contact_nature') else 'person',
+                'status': c.status if hasattr(c, 'status') else 'Actif',
+                'notes': c.notes if hasattr(c, 'notes') else '',
+                'created_at': c.created_at.isoformat() if c.created_at else None,
+                
+                # Legacy fields (backward compatibility)
+                'contact_person': c.contact_person,
+                'company': c.company,
+                'speciality': c.speciality,
+            }
+            
+            # Add enterprise-specific fields
+            if c.contact_nature == 'enterprise':
+                contact_data.update({
+                    'matricule_fiscal': c.matricule_fiscal,
+                    'code_tva': c.code_tva,
+                    'code_douane': c.code_douane,
+                    'registre_commerce': c.registre_commerce,
+                    'legal_form': c.legal_form,
+                    'capital': c.capital,
+                    'website': c.website,
+                    'employees_count': len(c.employees) if hasattr(c, 'employees') else 0
+                })
+            
+            # Add person-specific fields
+            if c.contact_nature == 'person':
+                contact_data.update({
+                    'enterprise_id': c.enterprise_id,
+                    'position': c.position,
+                    'enterprise_name': c.enterprise.name if c.enterprise else None
+                })
+            
+            result.append(contact_data)
+        
+        return jsonify(result)
     except Exception as e:
         print(f"Error in get_contacts: {str(e)}")
         return jsonify({'message': f'Error fetching contacts: {str(e)}'}), 500
@@ -432,20 +493,52 @@ def create_contact():
         current_user_id = int(get_jwt_identity())
         data = request.get_json()
         
+        contact_nature = data.get('contact_nature', 'person')
+        
+        # Create base contact
         contact = Contact(
             name=data['name'],
-            contact_person=data.get('contact_person'),
             email=data.get('email'),
             phone=data.get('phone'),
             address=data.get('address'),
-            company=data.get('company'),
             contact_type=data.get('contact_type', 'client'),
-            speciality=data.get('speciality'),
+            contact_nature=contact_nature,
             status=data.get('status', 'Actif'),
             notes=data.get('notes'),
-            created_by=current_user_id
+            created_by=current_user_id,
+            
+            # Legacy fields for backward compatibility
+            contact_person=data.get('contact_person'),
+            company=data.get('company'),
+            speciality=data.get('speciality')
         )
         
+        # Add enterprise-specific fields
+        if contact_nature == 'enterprise':
+            contact.matricule_fiscal = data.get('matricule_fiscal')
+            contact.code_tva = data.get('code_tva')
+            contact.code_douane = data.get('code_douane')
+            contact.registre_commerce = data.get('registre_commerce')
+            contact.legal_form = data.get('legal_form')
+            contact.capital = data.get('capital')
+            contact.website = data.get('website')
+        
+        # Add person-specific fields
+        if contact_nature == 'person':
+            contact.enterprise_id = data.get('enterprise_id')
+            contact.position = data.get('position')
+        
+        db.session.add(contact)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Contact created successfully',
+            'id': contact.id
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating contact: {str(e)}")
+        return jsonify({'message': f'Error creating contact: {str(e)}'}), 500
         db.session.add(contact)
         db.session.commit()
         
@@ -462,18 +555,38 @@ def update_contact(contact_id):
         contact = Contact.query.get_or_404(contact_id)
         data = request.get_json()
         
+        # Update common fields
         contact.name = data.get('name', contact.name)
-        contact.contact_person = data.get('contact_person', contact.contact_person)
         contact.email = data.get('email', contact.email)
         contact.phone = data.get('phone', contact.phone)
         contact.address = data.get('address', contact.address)
-        contact.company = data.get('company', contact.company)
         contact.contact_type = data.get('contact_type', contact.contact_type)
-        contact.speciality = data.get('speciality', contact.speciality)
         contact.notes = data.get('notes', contact.notes)
+        contact.status = data.get('status', contact.status)
         
-        if 'status' in data:
-            contact.status = data.get('status', contact.status)
+        # Update contact_nature if provided
+        if 'contact_nature' in data:
+            contact.contact_nature = data['contact_nature']
+        
+        # Update legacy fields
+        contact.contact_person = data.get('contact_person', contact.contact_person)
+        contact.company = data.get('company', contact.company)
+        contact.speciality = data.get('speciality', contact.speciality)
+        
+        # Update enterprise-specific fields
+        if contact.contact_nature == 'enterprise':
+            contact.matricule_fiscal = data.get('matricule_fiscal', contact.matricule_fiscal)
+            contact.code_tva = data.get('code_tva', contact.code_tva)
+            contact.code_douane = data.get('code_douane', contact.code_douane)
+            contact.registre_commerce = data.get('registre_commerce', contact.registre_commerce)
+            contact.legal_form = data.get('legal_form', contact.legal_form)
+            contact.capital = data.get('capital', contact.capital)
+            contact.website = data.get('website', contact.website)
+        
+        # Update person-specific fields
+        if contact.contact_nature == 'person':
+            contact.enterprise_id = data.get('enterprise_id', contact.enterprise_id)
+            contact.position = data.get('position', contact.position)
         
         db.session.commit()
         
@@ -482,6 +595,44 @@ def update_contact(contact_id):
         db.session.rollback()
         print(f"Error in update_contact: {str(e)}")
         return jsonify({'message': f'Error updating contact: {str(e)}'}), 500
+
+# Get enterprises only (for linking persons)
+@app.route('/api/contacts/enterprises', methods=['GET'])
+@jwt_required()
+def get_enterprises():
+    try:
+        enterprises = Contact.query.filter_by(contact_nature='enterprise').all()
+        return jsonify([{
+            'id': e.id,
+            'name': e.name,
+            'matricule_fiscal': e.matricule_fiscal,
+            'email': e.email,
+            'phone': e.phone
+        } for e in enterprises])
+    except Exception as e:
+        print(f"Error in get_enterprises: {str(e)}")
+        return jsonify({'message': f'Error fetching enterprises: {str(e)}'}), 500
+
+# Get employees of an enterprise
+@app.route('/api/contacts/enterprises/<int:enterprise_id>/employees', methods=['GET'])
+@jwt_required()
+def get_enterprise_employees(enterprise_id):
+    try:
+        enterprise = Contact.query.get_or_404(enterprise_id)
+        if enterprise.contact_nature != 'enterprise':
+            return jsonify({'message': 'Contact is not an enterprise'}), 400
+        
+        employees = Contact.query.filter_by(enterprise_id=enterprise_id).all()
+        return jsonify([{
+            'id': e.id,
+            'name': e.name,
+            'position': e.position,
+            'email': e.email,
+            'phone': e.phone
+        } for e in employees])
+    except Exception as e:
+        print(f"Error in get_enterprise_employees: {str(e)}")
+        return jsonify({'message': f'Error fetching employees: {str(e)}'}), 500
 
 @app.route('/api/contacts/<int:contact_id>', methods=['DELETE'])
 @jwt_required()
