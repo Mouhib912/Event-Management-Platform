@@ -20,22 +20,50 @@ const Contacts = () => {
   const [editingContact, setEditingContact] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
+  const [enterprises, setEnterprises] = useState([]);
   const [formData, setFormData] = useState({
+    // Common fields
     name: '',
-    contact_person: '',
     email: '',
     phone: '',
     address: '',
-    company: '',
     contact_type: 'client',
-    speciality: '',
+    contact_nature: 'person',
     status: 'Actif',
-    notes: ''
+    notes: '',
+    
+    // Enterprise-specific fields
+    matricule_fiscal: '',
+    code_tva: '',
+    code_douane: '',
+    registre_commerce: '',
+    legal_form: '',
+    capital: '',
+    website: '',
+    
+    // Person-specific fields
+    enterprise_id: null,
+    position: '',
+    
+    // Legacy fields (keep for backward compatibility)
+    contact_person: '',
+    company: '',
+    speciality: ''
   });
 
   useEffect(() => {
     loadContacts();
+    loadEnterprises();
   }, []);
+
+  const loadEnterprises = async () => {
+    try {
+      const data = await apiService.getEnterprises();
+      setEnterprises(data);
+    } catch (error) {
+      console.error('Error loading enterprises:', error);
+    }
+  };
 
   const loadContacts = async () => {
     try {
@@ -53,8 +81,13 @@ const Contacts = () => {
   const filterContacts = useCallback(() => {
     let filtered = contacts;
 
-    // Filter by tab (contact type)
-    if (activeTab !== 'all') {
+    // Filter by tab (contact type and nature)
+    if (activeTab === 'enterprises') {
+      filtered = filtered.filter(c => c.contact_nature === 'enterprise');
+    } else if (activeTab === 'persons') {
+      filtered = filtered.filter(c => c.contact_nature === 'person');
+    } else if (activeTab !== 'all') {
+      // Filter by contact_type (client/fournisseur/both)
       filtered = filtered.filter(c => c.contact_type === activeTab);
     }
 
@@ -66,7 +99,9 @@ const Contacts = () => {
         c.email?.toLowerCase().includes(search) ||
         c.phone?.includes(search) ||
         c.company?.toLowerCase().includes(search) ||
-        c.contact_person?.toLowerCase().includes(search)
+        c.contact_person?.toLowerCase().includes(search) ||
+        c.matricule_fiscal?.toLowerCase().includes(search) ||
+        c.position?.toLowerCase().includes(search)
       );
     }
 
@@ -109,16 +144,33 @@ const Contacts = () => {
   const handleEdit = (contact) => {
     setEditingContact(contact);
     setFormData({
+      // Common fields
       name: contact.name || '',
-      contact_person: contact.contact_person || '',
       email: contact.email || '',
       phone: contact.phone || '',
       address: contact.address || '',
-      company: contact.company || '',
       contact_type: contact.contact_type || 'client',
-      speciality: contact.speciality || '',
+      contact_nature: contact.contact_nature || 'person',
       status: contact.status || 'Actif',
-      notes: contact.notes || ''
+      notes: contact.notes || '',
+      
+      // Enterprise-specific
+      matricule_fiscal: contact.matricule_fiscal || '',
+      code_tva: contact.code_tva || '',
+      code_douane: contact.code_douane || '',
+      registre_commerce: contact.registre_commerce || '',
+      legal_form: contact.legal_form || '',
+      capital: contact.capital || '',
+      website: contact.website || '',
+      
+      // Person-specific
+      enterprise_id: contact.enterprise_id || null,
+      position: contact.position || '',
+      
+      // Legacy fields
+      contact_person: contact.contact_person || '',
+      company: contact.company || '',
+      speciality: contact.speciality || ''
     });
     setDialogOpen(true);
   };
@@ -140,16 +192,33 @@ const Contacts = () => {
 
   const resetForm = () => {
     setFormData({
+      // Common fields
       name: '',
-      contact_person: '',
       email: '',
       phone: '',
       address: '',
-      company: '',
       contact_type: 'client',
-      speciality: '',
+      contact_nature: 'person',
       status: 'Actif',
-      notes: ''
+      notes: '',
+      
+      // Enterprise-specific
+      matricule_fiscal: '',
+      code_tva: '',
+      code_douane: '',
+      registre_commerce: '',
+      legal_form: '',
+      capital: '',
+      website: '',
+      
+      // Person-specific
+      enterprise_id: null,
+      position: '',
+      
+      // Legacy fields
+      contact_person: '',
+      company: '',
+      speciality: ''
     });
   };
 
@@ -176,7 +245,9 @@ const Contacts = () => {
       total: contacts.length,
       clients: contacts.filter(c => c.contact_type === 'client').length,
       fournisseurs: contacts.filter(c => c.contact_type === 'fournisseur').length,
-      both: contacts.filter(c => c.contact_type === 'both').length
+      both: contacts.filter(c => c.contact_type === 'both').length,
+      enterprises: contacts.filter(c => c.contact_nature === 'enterprise').length,
+      persons: contacts.filter(c => c.contact_nature === 'person').length
     };
   };
 
@@ -215,37 +286,179 @@ const Contacts = () => {
 
             <div className="flex-1 overflow-y-auto px-6 py-4">
             <div className="space-y-4">
+              {/* Contact Nature Toggle */}
+              <div className="space-y-2">
+                <Label>Nature du Contact *</Label>
+                <div className="flex gap-4">
+                  <label className={`flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                    formData.contact_nature === 'person' 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="contact_nature"
+                      value="person"
+                      checked={formData.contact_nature === 'person'}
+                      onChange={(e) => handleInputChange('contact_nature', e.target.value)}
+                      className="sr-only"
+                    />
+                    <User className="h-5 w-5" />
+                    <span className="font-medium">Personne</span>
+                  </label>
+                  <label className={`flex-1 flex items-center justify-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                    formData.contact_nature === 'enterprise' 
+                      ? 'border-purple-500 bg-purple-50' 
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}>
+                    <input
+                      type="radio"
+                      name="contact_nature"
+                      value="enterprise"
+                      checked={formData.contact_nature === 'enterprise'}
+                      onChange={(e) => handleInputChange('contact_nature', e.target.value)}
+                      className="sr-only"
+                    />
+                    <Building2 className="h-5 w-5" />
+                    <span className="font-medium">Entreprise</span>
+                  </label>
+                </div>
+              </div>
+
               {/* Basic Information */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
-                  <Label htmlFor="name">Nom *</Label>
+                  <Label htmlFor="name">
+                    {formData.contact_nature === 'enterprise' ? 'Nom de l\'Entreprise *' : 'Nom de la Personne *'}
+                  </Label>
                   <Input
                     id="name"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    placeholder="Nom du contact ou de l'entreprise"
+                    placeholder={formData.contact_nature === 'enterprise' ? 'Nom de l\'entreprise' : 'Nom complet'}
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="contact_person">Personne de Contact</Label>
-                  <Input
-                    id="contact_person"
-                    value={formData.contact_person}
-                    onChange={(e) => handleInputChange('contact_person', e.target.value)}
-                    placeholder="Nom de la personne"
-                  />
-                </div>
+                {/* Enterprise-specific fields */}
+                {formData.contact_nature === 'enterprise' && (
+                  <>
+                    <div>
+                      <Label htmlFor="matricule_fiscal">Matricule Fiscal</Label>
+                      <Input
+                        id="matricule_fiscal"
+                        value={formData.matricule_fiscal}
+                        onChange={(e) => handleInputChange('matricule_fiscal', e.target.value)}
+                        placeholder="Ex: 123456ABC"
+                      />
+                    </div>
 
-                <div>
-                  <Label htmlFor="company">Société</Label>
-                  <Input
-                    id="company"
-                    value={formData.company}
-                    onChange={(e) => handleInputChange('company', e.target.value)}
-                    placeholder="Nom de la société"
-                  />
-                </div>
+                    <div>
+                      <Label htmlFor="code_tva">Code TVA</Label>
+                      <Input
+                        id="code_tva"
+                        value={formData.code_tva}
+                        onChange={(e) => handleInputChange('code_tva', e.target.value)}
+                        placeholder="Ex: TN123456"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="code_douane">Code Douane</Label>
+                      <Input
+                        id="code_douane"
+                        value={formData.code_douane}
+                        onChange={(e) => handleInputChange('code_douane', e.target.value)}
+                        placeholder="Code douane"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="registre_commerce">Registre de Commerce</Label>
+                      <Input
+                        id="registre_commerce"
+                        value={formData.registre_commerce}
+                        onChange={(e) => handleInputChange('registre_commerce', e.target.value)}
+                        placeholder="Numéro RC"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="legal_form">Forme Juridique</Label>
+                      <Select
+                        value={formData.legal_form}
+                        onValueChange={(value) => handleInputChange('legal_form', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="SARL">SARL</SelectItem>
+                          <SelectItem value="SA">SA</SelectItem>
+                          <SelectItem value="SUARL">SUARL</SelectItem>
+                          <SelectItem value="SNC">SNC</SelectItem>
+                          <SelectItem value="Entreprise Individuelle">Entreprise Individuelle</SelectItem>
+                          <SelectItem value="Autre">Autre</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="capital">Capital Social</Label>
+                      <Input
+                        id="capital"
+                        value={formData.capital}
+                        onChange={(e) => handleInputChange('capital', e.target.value)}
+                        placeholder="Ex: 10000"
+                      />
+                    </div>
+
+                    <div className="col-span-2">
+                      <Label htmlFor="website">Site Web</Label>
+                      <Input
+                        id="website"
+                        type="url"
+                        value={formData.website}
+                        onChange={(e) => handleInputChange('website', e.target.value)}
+                        placeholder="https://www.example.com"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Person-specific fields */}
+                {formData.contact_nature === 'person' && (
+                  <>
+                    <div>
+                      <Label htmlFor="enterprise_id">Entreprise</Label>
+                      <Select
+                        value={formData.enterprise_id?.toString() || ''}
+                        onValueChange={(value) => handleInputChange('enterprise_id', value ? parseInt(value) : null)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Sélectionner une entreprise (optionnel)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Aucune</SelectItem>
+                          {enterprises.map(ent => (
+                            <SelectItem key={ent.id} value={ent.id.toString()}>
+                              {ent.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="position">Poste</Label>
+                      <Input
+                        id="position"
+                        value={formData.position}
+                        onChange={(e) => handleInputChange('position', e.target.value)}
+                        placeholder="Ex: Directeur Commercial"
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div>
                   <Label htmlFor="email">Email</Label>
@@ -430,9 +643,15 @@ const Contacts = () => {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4 p-1 bg-gradient-to-r from-slate-50 to-gray-50">
+            <TabsList className="grid w-full grid-cols-6 p-1 bg-gradient-to-r from-slate-50 to-gray-50">
               <TabsTrigger value="all" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
                 Tous ({stats.total})
+              </TabsTrigger>
+              <TabsTrigger value="enterprises" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
+                Entreprises ({stats.enterprises})
+              </TabsTrigger>
+              <TabsTrigger value="persons" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
+                Personnes ({stats.persons})
               </TabsTrigger>
               <TabsTrigger value="client" className="data-[state=active]:bg-white data-[state=active]:shadow-md">
                 Clients ({stats.clients})
@@ -458,8 +677,32 @@ const Contacts = () => {
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <CardTitle className="text-lg font-bold group-hover:text-slate-700 transition-colors">{contact.name}</CardTitle>
-                            {contact.company && (
+                            <div className="flex items-center gap-2">
+                              {contact.contact_nature === 'enterprise' ? (
+                                <Building2 className="h-5 w-5 text-purple-600" />
+                              ) : (
+                                <User className="h-5 w-5 text-blue-600" />
+                              )}
+                              <CardTitle className="text-lg font-bold group-hover:text-slate-700 transition-colors">{contact.name}</CardTitle>
+                            </div>
+                            
+                            {/* Enterprise-specific info */}
+                            {contact.contact_nature === 'enterprise' && contact.matricule_fiscal && (
+                              <CardDescription className="flex items-center gap-1 mt-1 text-xs">
+                                MF: {contact.matricule_fiscal}
+                              </CardDescription>
+                            )}
+                            
+                            {/* Person-specific info */}
+                            {contact.contact_nature === 'person' && contact.enterprise_name && (
+                              <CardDescription className="flex items-center gap-1 mt-1">
+                                <Building2 className="h-3 w-3" />
+                                {contact.enterprise_name}
+                              </CardDescription>
+                            )}
+                            
+                            {/* Legacy company field */}
+                            {contact.company && !contact.enterprise_name && (
                               <CardDescription className="flex items-center gap-1 mt-1">
                                 <Building2 className="h-3 w-3" />
                                 {contact.company}
@@ -489,6 +732,23 @@ const Contacts = () => {
                           {getContactTypeBadge(contact.contact_type)}
                         </div>
                         
+                        {/* Person position */}
+                        {contact.contact_nature === 'person' && contact.position && (
+                          <div className="flex items-center gap-2 text-sm text-gray-600 bg-blue-50 p-2 rounded">
+                            <User className="h-3 w-3" />
+                            <span className="font-medium">{contact.position}</span>
+                          </div>
+                        )}
+                        
+                        {/* Enterprise employees count */}
+                        {contact.contact_nature === 'enterprise' && contact.employees_count > 0 && (
+                          <div className="flex items-center gap-2 text-sm text-purple-600 bg-purple-50 p-2 rounded">
+                            <Users className="h-3 w-3" />
+                            <span className="font-medium">{contact.employees_count} employé(s)</span>
+                          </div>
+                        )}
+                        
+                        {/* Legacy contact_person field */}
                         {contact.contact_person && (
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <User className="h-3 w-3" />
@@ -514,6 +774,14 @@ const Contacts = () => {
                           <div className="flex items-start gap-2 text-sm text-gray-600">
                             <MapPin className="h-3 w-3 mt-0.5" />
                             <span className="line-clamp-2">{contact.address}</span>
+                          </div>
+                        )}
+                        
+                        {/* Enterprise legal info */}
+                        {contact.contact_nature === 'enterprise' && contact.legal_form && (
+                          <div className="text-sm text-gray-500 italic mt-2">
+                            {contact.legal_form}
+                            {contact.capital && ` - Capital: ${contact.capital} TND`}
                           </div>
                         )}
                         

@@ -125,6 +125,14 @@ class ApiService {
     })
   }
 
+  async getEnterprises() {
+    return this.request('/contacts/enterprises')
+  }
+
+  async getEnterpriseEmployees(enterpriseId) {
+    return this.request(`/contacts/enterprises/${enterpriseId}/employees`)
+  }
+
   // Suppliers
   async getSuppliers() {
     return this.request('/suppliers')
