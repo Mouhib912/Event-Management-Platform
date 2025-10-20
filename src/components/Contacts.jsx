@@ -7,7 +7,7 @@ import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Badge } from './ui/badge';
-import { Plus, Edit2, Trash2, Search, Users, Building2, ShoppingBag, RefreshCcw, Mail, Phone, MapPin, User } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Users, Building2, ShoppingBag, RefreshCcw, Mail, Phone, MapPin, User, History, Calendar, FileText, TrendingUp } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import apiService from '../services/api';
 import { toast } from 'sonner';
@@ -21,6 +21,11 @@ const Contacts = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
   const [enterprises, setEnterprises] = useState([]);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [selectedContactHistory, setSelectedContactHistory] = useState(null);
+  const [contactStands, setContactStands] = useState([]);
+  const [contactInvoices, setContactInvoices] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const [formData, setFormData] = useState({
     // Common fields
     name: '',
@@ -188,6 +193,55 @@ const Contacts = () => {
       console.error('Error deleting contact:', error);
       toast.error('Erreur lors de la suppression');
     }
+  };
+
+  const handleViewHistory = async (contact) => {
+    try {
+      setSelectedContactHistory(contact);
+      setHistoryDialogOpen(true);
+      setLoadingHistory(true);
+      
+      // Fetch stands and invoices for this contact
+      const [stands, invoices] = await Promise.all([
+        apiService.getStands(),
+        apiService.getInvoices()
+      ]);
+      
+      // Filter stands for this contact
+      const contactStandsFiltered = stands.filter(stand => 
+        stand.client_id === contact.id || stand.client?.id === contact.id
+      );
+      
+      // Filter invoices for this contact
+      const contactInvoicesFiltered = invoices.filter(invoice => 
+        invoice.client_id === contact.id
+      );
+      
+      setContactStands(contactStandsFiltered);
+      setContactInvoices(contactInvoicesFiltered);
+    } catch (error) {
+      console.error('Error loading contact history:', error);
+      toast.error('Erreur lors du chargement de l\'historique');
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  const calculateHistoryStats = () => {
+    const totalRevenue = contactInvoices.reduce((sum, inv) => sum + (inv.total_ttc || 0), 0);
+    const paidAmount = contactInvoices.reduce((sum, inv) => sum + (inv.advance_payment || 0), 0);
+    const pendingAmount = totalRevenue - paidAmount;
+    
+    return {
+      totalStands: contactStands.length,
+      totalInvoices: contactInvoices.length,
+      totalRevenue: totalRevenue.toFixed(2),
+      paidAmount: paidAmount.toFixed(2),
+      pendingAmount: pendingAmount.toFixed(2),
+      devisCount: contactInvoices.filter(inv => inv.status === 'devis').length,
+      factureCount: contactInvoices.filter(inv => inv.status === 'facture').length,
+      paidCount: contactInvoices.filter(inv => inv.status === 'paid').length
+    };
   };
 
   const resetForm = () => {
@@ -713,7 +767,16 @@ const Contacts = () => {
                             <Button
                               size="sm"
                               variant="ghost"
+                              onClick={() => handleViewHistory(contact)}
+                              title="Voir l'historique"
+                            >
+                              <History className="h-4 w-4 text-blue-600" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
                               onClick={() => handleEdit(contact)}
+                              title="Modifier"
                             >
                               <Edit2 className="h-4 w-4" />
                             </Button>
@@ -721,6 +784,7 @@ const Contacts = () => {
                               size="sm"
                               variant="ghost"
                               onClick={() => handleDelete(contact.id)}
+                              title="Supprimer"
                             >
                               <Trash2 className="h-4 w-4 text-red-500" />
                             </Button>
@@ -805,6 +869,179 @@ const Contacts = () => {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* History Dialog */}
+      <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="h-5 w-5" />
+              Historique - {selectedContactHistory?.name}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {loadingHistory ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="text-gray-500">Chargement de l'historique...</div>
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto space-y-6">
+              {/* Statistics Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <Card className="border-blue-200 bg-blue-50">
+                  <CardContent className="p-4">
+                    <div className="text-xs text-blue-600 font-medium">Stands</div>
+                    <div className="text-2xl font-bold text-blue-700">{calculateHistoryStats().totalStands}</div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-purple-200 bg-purple-50">
+                  <CardContent className="p-4">
+                    <div className="text-xs text-purple-600 font-medium">Factures</div>
+                    <div className="text-2xl font-bold text-purple-700">{calculateHistoryStats().totalInvoices}</div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-green-200 bg-green-50">
+                  <CardContent className="p-4">
+                    <div className="text-xs text-green-600 font-medium">Chiffre d'affaires</div>
+                    <div className="text-xl font-bold text-green-700">{calculateHistoryStats().totalRevenue} TND</div>
+                  </CardContent>
+                </Card>
+                
+                <Card className="border-orange-200 bg-orange-50">
+                  <CardContent className="p-4">
+                    <div className="text-xs text-orange-600 font-medium">En attente</div>
+                    <div className="text-xl font-bold text-orange-700">{calculateHistoryStats().pendingAmount} TND</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Stands Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Building2 className="h-5 w-5" />
+                    Stands ({contactStands.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {contactStands.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      Aucun stand trouvé
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {contactStands.map(stand => (
+                        <div key={stand.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                          <div className="flex-1">
+                            <div className="font-medium">{stand.name}</div>
+                            <div className="text-sm text-gray-500">
+                              <Calendar className="h-3 w-3 inline mr-1" />
+                              {new Date(stand.created_at).toLocaleDateString('fr-FR')}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant={stand.status === 'approved' ? 'default' : 'secondary'}>
+                              {stand.status}
+                            </Badge>
+                            <div className="text-sm font-medium text-gray-700 mt-1">
+                              {stand.total_price?.toFixed(2) || '0.00'} TND
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Invoices Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <FileText className="h-5 w-5" />
+                    Factures & Devis ({contactInvoices.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {contactInvoices.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      Aucune facture trouvée
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {contactInvoices.map(invoice => (
+                        <div key={invoice.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border">
+                          <div className="flex-1">
+                            <div className="font-medium">{invoice.invoice_number}</div>
+                            <div className="text-sm text-gray-500">
+                              <Calendar className="h-3 w-3 inline mr-1" />
+                              {new Date(invoice.created_at).toLocaleDateString('fr-FR')}
+                              {invoice.stand_name && (
+                                <span className="ml-2">• Stand: {invoice.stand_name}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant={
+                              invoice.status === 'paid' ? 'default' : 
+                              invoice.status === 'facture' ? 'secondary' : 
+                              'outline'
+                            }>
+                              {invoice.status === 'devis' ? 'Devis' : 
+                               invoice.status === 'facture' ? 'Facture' : 
+                               'Payée'}
+                            </Badge>
+                            <div className="text-sm font-medium text-gray-700 mt-1">
+                              {invoice.total_ttc?.toFixed(2)} TND
+                            </div>
+                            {invoice.advance_payment > 0 && (
+                              <div className="text-xs text-green-600">
+                                Avance: {invoice.advance_payment.toFixed(2)} TND
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Revenue Summary */}
+              <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <TrendingUp className="h-5 w-5 text-blue-600" />
+                    Résumé Financier
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-sm text-gray-600">Devis en cours</div>
+                      <div className="text-xl font-bold text-gray-800">{calculateHistoryStats().devisCount}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-600">Factures</div>
+                      <div className="text-xl font-bold text-gray-800">{calculateHistoryStats().factureCount}</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-600">Payé</div>
+                      <div className="text-xl font-bold text-green-600">{calculateHistoryStats().paidAmount} TND</div>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-600">Restant à payer</div>
+                      <div className="text-xl font-bold text-orange-600">{calculateHistoryStats().pendingAmount} TND</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
