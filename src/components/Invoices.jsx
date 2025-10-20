@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from './ui/dialog';
 import { Badge } from './ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-import { FileText, Plus, Download, CheckCircle, Clock, XCircle, User, Building2, Mail, Phone, MapPin, FileSignature, DollarSign, Search, Package } from 'lucide-react';
+import { FileText, Plus, Download, CheckCircle, Clock, XCircle, User, Building2, Mail, Phone, MapPin, FileSignature, DollarSign, Search, Package, Edit2 } from 'lucide-react';
 import { Separator } from './ui/separator';
 import apiService from '../services/api';
 import { toast } from 'sonner';
@@ -20,6 +20,7 @@ const Invoices = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingInvoice, setEditingInvoice] = useState(null);
   const [signingDialogOpen, setSigningDialogOpen] = useState(false);
   const [selectedInvoiceForSigning, setSelectedInvoiceForSigning] = useState(null);
   const [advancePayment, setAdvancePayment] = useState(0);
@@ -282,19 +283,27 @@ const Invoices = () => {
         use_stand: useStand
       };
 
-      await apiService.createInvoice(invoiceData);
-      toast.success('Devis créé avec succès!');
+      if (editingInvoice) {
+        // Update existing invoice
+        await apiService.updateInvoice(editingInvoice.id, invoiceData);
+        toast.success('Facture mise à jour avec succès!');
+      } else {
+        // Create new invoice
+        await apiService.createInvoice(invoiceData);
+        toast.success('Devis créé avec succès!');
+      }
       
       resetForm();
       loadData();
     } catch (error) {
-      console.error('Error creating invoice:', error);
-      toast.error('Erreur lors de la création du devis');
+      console.error('Error saving invoice:', error);
+      toast.error(editingInvoice ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création du devis');
     }
   };
   
   const resetForm = () => {
     setDialogOpen(false);
+    setEditingInvoice(null);
     setSelectedClient(null);
     setEditClientInfo(false);
     setEditCompanyInfo(false);
@@ -316,6 +325,65 @@ const Invoices = () => {
       tva_percentage: 19,
       product_factor: 1
     });
+  };
+
+  const handleEditInvoice = async (invoice) => {
+    try {
+      // Set editing mode
+      setEditingInvoice(invoice);
+      
+      // Determine if this is a stand-based or direct invoice
+      const isStandBased = invoice.stand_id ? true : false;
+      setUseStand(isStandBased);
+      
+      // Load invoice items
+      const items = await apiService.getInvoiceItems(invoice.id);
+      setSelectedStandItems(items.map(item => ({
+        id: item.id,
+        product_id: item.product_id,
+        product_name: item.product_name,
+        quantity: item.quantity,
+        days: item.days || 1,
+        unit_price: item.unit_price,
+        factor: item.factor || 1,
+        total_price: item.total_price,
+        pricing_type: item.pricing_type
+      })));
+      
+      // Populate form with invoice data
+      setFormData({
+        stand_id: invoice.stand_id || '',
+        client_id: invoice.client_id || '',
+        client_name: invoice.client_name,
+        client_email: invoice.client_email || '',
+        client_phone: invoice.client_phone || '',
+        client_address: invoice.client_address || '',
+        client_company: invoice.client_company || '',
+        company_name: invoice.company_name || 'Votre Entreprise',
+        company_address: invoice.company_address || '',
+        company_phone: invoice.company_phone || '',
+        company_email: invoice.company_email || '',
+        remise: invoice.remise || 0,
+        remise_type: invoice.remise_type || 'percentage',
+        tva_percentage: invoice.tva_percentage || 19,
+        product_factor: invoice.product_factor || 1
+      });
+      
+      // If stand-based, load the stand client info
+      if (isStandBased) {
+        const selectedStand = stands.find(s => s.id === invoice.stand_id);
+        if (selectedStand) {
+          setSelectedClient(selectedStand.client);
+        }
+      }
+      
+      // Open dialog
+      setDialogOpen(true);
+      
+    } catch (error) {
+      console.error('Error loading invoice for editing:', error);
+      toast.error('Erreur lors du chargement de la facture');
+    }
   };
 
   const handleSignDevis = (invoice) => {
@@ -411,9 +479,9 @@ const Invoices = () => {
           </DialogTrigger>
           <DialogContent className="max-w-6xl h-[95vh] flex flex-col p-0">
             <DialogHeader className="px-6 pt-6 pb-4 border-b">
-              <DialogTitle>Créer un Nouveau Devis</DialogTitle>
+              <DialogTitle>{editingInvoice ? 'Modifier la Facture' : 'Créer un Nouveau Devis'}</DialogTitle>
               <DialogDescription>
-                Créez un devis ou une facture pour vos clients
+                {editingInvoice ? 'Modifiez les détails de cette facture' : 'Créez un devis ou une facture pour vos clients'}
               </DialogDescription>
             </DialogHeader>
             
@@ -993,7 +1061,7 @@ const Invoices = () => {
                   Annuler
                 </Button>
                 <Button onClick={handleCreateInvoice} disabled={selectedStandItems.length === 0}>
-                  Créer le Devis
+                  {editingInvoice ? 'Mettre à Jour' : 'Créer le Devis'}
                 </Button>
               </div>
             </div>
@@ -1198,10 +1266,23 @@ const Invoices = () => {
                     <TableCell>{getStatusBadge(invoice.status)}</TableCell>
                     <TableCell>
                       <div className="flex gap-2 flex-wrap">
+                        {/* Edit button - only for devis */}
+                        {invoice.status === 'devis' && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEditInvoice(invoice)}
+                            title="Modifier"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
                         <Button
                           size="sm"
                           variant="outline"
                           onClick={() => handleDownloadPDF(invoice.id)}
+                          title="Télécharger PDF"
                         >
                           <Download className="h-4 w-4" />
                         </Button>

@@ -1772,6 +1772,88 @@ def update_invoice_status(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
     data = request.get_json()
     
+    # Handle full invoice update (if modified_items provided)
+    if 'modified_items' in data:
+        # Update invoice fields
+        if 'client_name' in data:
+            invoice.client_name = data['client_name']
+        if 'client_email' in data:
+            invoice.client_email = data['client_email']
+        if 'client_phone' in data:
+            invoice.client_phone = data['client_phone']
+        if 'client_address' in data:
+            invoice.client_address = data['client_address']
+        if 'client_company' in data:
+            invoice.client_company = data['client_company']
+        if 'company_name' in data:
+            invoice.company_name = data['company_name']
+        if 'company_address' in data:
+            invoice.company_address = data['company_address']
+        if 'company_phone' in data:
+            invoice.company_phone = data['company_phone']
+        if 'company_email' in data:
+            invoice.company_email = data['company_email']
+        if 'remise' in data:
+            invoice.remise = float(data['remise'])
+        if 'remise_type' in data:
+            invoice.remise_type = data['remise_type']
+        if 'tva_percentage' in data:
+            invoice.tva_percentage = float(data['tva_percentage'])
+        if 'product_factor' in data:
+            invoice.product_factor = float(data['product_factor'])
+        
+        # Delete existing invoice items
+        InvoiceItem.query.filter_by(invoice_id=invoice_id).delete()
+        
+        # Add updated items
+        modified_items = data['modified_items']
+        for item_data in modified_items:
+            invoice_item = InvoiceItem(
+                invoice_id=invoice.id,
+                product_id=item_data['product_id'],
+                product_name=item_data.get('product_name', ''),
+                quantity=item_data['quantity'],
+                days=item_data.get('days', 1),
+                unit_price=item_data['unit_price'],
+                factor=item_data.get('factor', 1),
+                total_price=item_data['total_price'],
+                pricing_type=item_data.get('pricing_type', 'Par Événement')
+            )
+            db.session.add(invoice_item)
+        
+        # Recalculate totals
+        subtotal = sum(item['total_price'] for item in modified_items)
+        total_ht = subtotal
+        
+        # Apply remise
+        if invoice.remise > 0:
+            if invoice.remise_type == 'percentage':
+                total_ht = subtotal - (subtotal * invoice.remise / 100)
+            else:
+                total_ht = subtotal - invoice.remise
+        
+        # Calculate TVA and total TTC
+        tva_amount = total_ht * (invoice.tva_percentage / 100)
+        total_ttc = total_ht + tva_amount
+        
+        invoice.total_ht = total_ht
+        invoice.tva_amount = tva_amount
+        invoice.total_ttc = total_ttc
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Invoice updated successfully',
+            'invoice': {
+                'id': invoice.id,
+                'invoice_number': invoice.invoice_number,
+                'total_ht': invoice.total_ht,
+                'tva_amount': invoice.tva_amount,
+                'total_ttc': invoice.total_ttc
+            }
+        }), 200
+    
+    # Handle status update only
     if 'status' in data:
         old_status = invoice.status
         new_status = data['status']
@@ -1793,6 +1875,25 @@ def update_invoice_status(invoice_id):
         'message': 'Invoice updated successfully',
         'invoice_number': invoice.invoice_number
     }), 200
+
+@app.route('/api/invoices/<int:invoice_id>/items', methods=['GET'])
+@jwt_required()
+def get_invoice_items(invoice_id):
+    """Get all items for a specific invoice"""
+    invoice = Invoice.query.get_or_404(invoice_id)
+    items = InvoiceItem.query.filter_by(invoice_id=invoice_id).all()
+    
+    return jsonify([{
+        'id': item.id,
+        'product_id': item.product_id,
+        'product_name': item.product_name,
+        'quantity': item.quantity,
+        'days': item.days,
+        'unit_price': item.unit_price,
+        'factor': item.factor,
+        'total_price': item.total_price,
+        'pricing_type': item.pricing_type
+    } for item in items]), 200
 
 # Invoice/Devis PDF Generation
 def generate_invoice_pdf(invoice_id):

@@ -322,6 +322,17 @@ class ApiService {
     })
   }
 
+  async updateInvoice(invoiceId, invoiceData) {
+    return this.request(`/invoices/${invoiceId}`, {
+      method: 'PUT',
+      body: JSON.stringify(invoiceData),
+    })
+  }
+
+  async getInvoiceItems(invoiceId) {
+    return this.request(`/invoices/${invoiceId}/items`)
+  }
+
   async downloadInvoicePDF(invoiceId) {
     const url = `${API_BASE_URL}/invoices/${invoiceId}/pdf`
     const response = await fetch(url, {
