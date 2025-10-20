@@ -152,7 +152,9 @@ function UserManagement({ user }) {
   }
 
   // Only owners can access this component
-  if (user?.role !== 'Propriétaire') {
+  const isOwnerOrAdmin = user?.role === 'Propriétaire' || user?.role === 'Admin' || user?.role === 'admin';
+  
+  if (!isOwnerOrAdmin) {
     return (
       <div className="p-6">
         <Card>
