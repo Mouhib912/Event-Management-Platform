@@ -142,14 +142,6 @@ export default function LoginPage() {
                 {loading ? 'Connexion...' : 'Se connecter'}
               </Button>
             </form>
-            
-            <div className="mt-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 rounded-xl border-2 border-slate-100">
-              <p className="font-semibold text-center text-sm text-gray-700 mb-2">Comptes de test disponibles:</p>
-              <div className="text-xs space-y-1.5 text-gray-600">
-                <p className="bg-white p-2 rounded-lg"><strong className="text-slate-700">Propriétaire:</strong> owner@eventmanagement.com / owner123</p>
-                <p className="bg-white p-2 rounded-lg"><strong className="text-slate-700">Commercial:</strong> test@example.com / password123</p>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>

@@ -10,6 +10,7 @@ import Suppliers from './components/Suppliers'
 import Clients from './components/Clients'
 import Contacts from './components/Contacts'
 import Products from './components/Products'
+import Categories from './components/Categories'
 import StandSimulator from './components/StandSimulator'
 import StandCatalog from './components/StandCatalog'
 import Achat from './components/Achat'
@@ -52,6 +53,7 @@ function AppContent() {
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/clients" element={<Clients />} />
             <Route path="/products" element={<Products />} />
+            <Route path="/categories" element={<Categories />} />
             <Route path="/stand-simulator" element={<StandSimulator />} />
             <Route path="/stand-catalog" element={<StandCatalog />} />
             <Route path="/achat" element={<Achat />} />

@@ -14,10 +14,12 @@ import {
   Trash2,
   UserPlus
 } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { toast } from 'sonner'
+import apiService from '../services/api'
 
 function UserManagement({ user }) {
   const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [formData, setFormData] = useState({
@@ -54,44 +56,23 @@ function UserManagement({ user }) {
     }
   ]
 
-  // Mock data for demonstration
+  // Load users from API
   useEffect(() => {
-    const mockUsers = [
-      {
-        id: 1,
-        name: 'Jean Dupont',
-        email: 'jean.dupont@company.com',
-        role: 'Commercial',
-        created_at: '2024-01-15T10:30:00Z',
-        last_login: '2024-10-07T09:15:00Z'
-      },
-      {
-        id: 2,
-        name: 'Marie Martin',
-        email: 'marie.martin@company.com',
-        role: 'Logistique',
-        created_at: '2024-02-20T14:20:00Z',
-        last_login: '2024-10-06T16:45:00Z'
-      },
-      {
-        id: 3,
-        name: 'Pierre Durand',
-        email: 'pierre.durand@company.com',
-        role: 'Finance',
-        created_at: '2024-03-10T11:00:00Z',
-        last_login: '2024-10-05T13:30:00Z'
-      },
-      {
-        id: 4,
-        name: 'Sophie Leroy',
-        email: 'sophie.leroy@company.com',
-        role: 'Visiteur',
-        created_at: '2024-04-05T16:15:00Z',
-        last_login: '2024-10-04T10:20:00Z'
-      }
-    ]
-    setUsers(mockUsers)
+    loadUsers()
   }, [])
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true)
+      const data = await apiService.getUsers()
+      setUsers(data)
+    } catch (error) {
+      toast.error('Erreur lors du chargement des utilisateurs')
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -109,32 +90,30 @@ function UserManagement({ user }) {
     try {
       if (editingUser) {
         // Update user
-        const updatedUsers = users.map(u => 
-          u.id === editingUser.id 
-            ? { ...u, name: formData.name, email: formData.email, role: formData.role }
-            : u
-        )
-        setUsers(updatedUsers)
-        toast.success('Utilisateur modifié avec succès!')
-      } else {
-        // Create new user
-        const newUser = {
-          id: users.length + 1,
+        await apiService.updateUser(editingUser.id, {
           name: formData.name,
           email: formData.email,
           role: formData.role,
-          created_at: new Date().toISOString(),
-          last_login: null
-        }
-        setUsers([...users, newUser])
+          password: formData.password || undefined
+        })
+        toast.success('Utilisateur modifié avec succès!')
+      } else {
+        // Create new user
+        await apiService.register({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role
+        })
         toast.success('Utilisateur créé avec succès!')
       }
 
       setShowCreateDialog(false)
       setEditingUser(null)
       setFormData({ name: '', email: '', password: '', role: '' })
+      loadUsers() // Reload users list
     } catch (error) {
-      toast.error('Erreur lors de la sauvegarde')
+      toast.error(error.message || 'Erreur lors de la sauvegarde')
     }
   }
 
@@ -152,10 +131,11 @@ function UserManagement({ user }) {
   const handleDelete = async (userId) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
       try {
-        setUsers(users.filter(u => u.id !== userId))
+        await apiService.deleteUser(userId)
         toast.success('Utilisateur supprimé avec succès!')
+        loadUsers() // Reload users list
       } catch (error) {
-        toast.error('Erreur lors de la suppression')
+        toast.error(error.message || 'Erreur lors de la suppression')
       }
     }
   }
@@ -186,6 +166,19 @@ function UserManagement({ user }) {
             </div>
           </CardContent>
         </Card>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Chargement des utilisateurs...</p>
+          </div>
+        </div>
       </div>
     )
   }

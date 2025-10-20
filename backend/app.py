@@ -316,6 +316,84 @@ def register():
     
     return jsonify({'message': 'User created successfully'}), 201
 
+# User Management Routes
+@app.route('/api/users', methods=['GET'])
+@jwt_required()
+def get_users():
+    current_user_id = int(get_jwt_identity())
+    current_user = User.query.get(current_user_id)
+    
+    # Only owners can view all users
+    if current_user.role != 'Propriétaire':
+        return jsonify({'message': 'Unauthorized'}), 403
+    
+    users = User.query.all()
+    return jsonify([{
+        'id': user.id,
+        'name': user.name,
+        'email': user.email,
+        'role': user.role,
+        'created_at': user.created_at.isoformat() if user.created_at else None
+    } for user in users])
+
+@app.route('/api/users/<int:user_id>', methods=['PUT'])
+@jwt_required()
+def update_user(user_id):
+    current_user_id = int(get_jwt_identity())
+    current_user = User.query.get(current_user_id)
+    
+    # Only owners can update users
+    if current_user.role != 'Propriétaire':
+        return jsonify({'message': 'Unauthorized'}), 403
+    
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+    
+    data = request.get_json()
+    
+    # Check if email is being changed and if it's already taken
+    if 'email' in data and data['email'] != user.email:
+        if User.query.filter_by(email=data['email']).first():
+            return jsonify({'message': 'Email already exists'}), 400
+    
+    # Update user fields
+    if 'name' in data:
+        user.name = data['name']
+    if 'email' in data:
+        user.email = data['email']
+    if 'role' in data:
+        user.role = data['role']
+    if 'password' in data and data['password']:
+        user.password_hash = generate_password_hash(data['password'])
+    
+    db.session.commit()
+    
+    return jsonify({'message': 'User updated successfully'})
+
+@app.route('/api/users/<int:user_id>', methods=['DELETE'])
+@jwt_required()
+def delete_user(user_id):
+    current_user_id = int(get_jwt_identity())
+    current_user = User.query.get(current_user_id)
+    
+    # Only owners can delete users
+    if current_user.role != 'Propriétaire':
+        return jsonify({'message': 'Unauthorized'}), 403
+    
+    # Prevent self-deletion
+    if user_id == current_user_id:
+        return jsonify({'message': 'Cannot delete your own account'}), 400
+    
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'message': 'User not found'}), 404
+    
+    db.session.delete(user)
+    db.session.commit()
+    
+    return jsonify({'message': 'User deleted successfully'})
+
 # Contact Routes (Unified Clients + Suppliers)
 @app.route('/api/contacts', methods=['GET'])
 @jwt_required()

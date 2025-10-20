@@ -10,6 +10,11 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu'
+import { 
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 import { useAuth } from '../contexts/AuthContext'
 import { 
   LayoutDashboard, 
@@ -26,11 +31,18 @@ import {
   X,
   Building2,
   UserPlus,
-  ContactRound
+  ContactRound,
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react'
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [openModules, setOpenModules] = useState({
+    'stands': true,
+    'achat': true,
+    'clients': true
+  })
   const location = useLocation()
   const { user, logout, canAccess } = useAuth()
 
@@ -46,97 +58,128 @@ export default function Layout({ children }) {
     return roleMapping[role?.toLowerCase()] || role
   }
 
-  const getNavigationItems = () => {
-    const items = []
+  const toggleModule = (moduleKey) => {
+    setOpenModules(prev => ({
+      ...prev,
+      [moduleKey]: !prev[moduleKey]
+    }))
+  }
 
-    // Dashboard - available to all
+  const getModularNavigation = () => {
+    const modules = []
+
+    // Dashboard - standalone
     if (canAccess('dashboard')) {
-      items.push({ 
+      modules.push({ 
+        type: 'single',
         path: '/dashboard', 
         label: 'Tableau de Bord', 
         icon: LayoutDashboard
       })
     }
 
-    // User Management - Owner only
+    // User Management - standalone (Owner only)
     if (canAccess('user-management')) {
-      items.push({ 
+      modules.push({ 
+        type: 'single',
         path: '/user-management', 
         label: 'Gestion Utilisateurs', 
         icon: UserPlus 
       })
     }
 
-    // Stand Simulator
-    if (canAccess('stand-simulator')) {
-      items.push({ 
-        path: '/stand-simulator', 
-        label: 'Créer un Stand', 
-        icon: Hammer 
+    // Module Stands
+    if (canAccess('stand-simulator') || canAccess('stand-catalog')) {
+      modules.push({
+        type: 'module',
+        key: 'stands',
+        label: 'Module Stands',
+        icon: Hammer,
+        items: [
+          ...(canAccess('stand-catalog') ? [{ 
+            path: '/stand-catalog', 
+            label: 'Catalogue des Stands', 
+            icon: FolderOpen 
+          }] : []),
+          ...(canAccess('stand-simulator') ? [{ 
+            path: '/stand-simulator', 
+            label: 'Créer un Stand', 
+            icon: Hammer 
+          }] : [])
+        ]
       })
     }
 
-    // Stand Catalog
-    if (canAccess('stand-catalog')) {
-      items.push({ 
-        path: '/stand-catalog', 
-        label: 'Catalogue des Stands', 
-        icon: FolderOpen 
+    // Module Achat
+    if (canAccess('achat') || canAccess('products')) {
+      modules.push({
+        type: 'module',
+        key: 'achat',
+        label: 'Module Achat',
+        icon: ShoppingCart,
+        items: [
+          ...(canAccess('products') ? [{ 
+            path: '/products', 
+            label: 'Produits', 
+            icon: Package 
+          }] : []),
+          ...(canAccess('products') ? [{ 
+            path: '/categories', 
+            label: 'Catégories', 
+            icon: Tags 
+          }] : []),
+          ...(canAccess('achat') ? [{ 
+            path: '/achat', 
+            label: 'Bons d\'Achat', 
+            icon: ShoppingCart 
+          }] : [])
+        ]
       })
     }
 
-    // Purchase Module
-    if (canAccess('achat')) {
-      items.push({ 
-        path: '/achat', 
-        label: 'Module Achat', 
-        icon: ShoppingCart 
+    // Module Clients & Facturation
+    if (canAccess('suppliers') || canAccess('clients') || canAccess('invoices')) {
+      modules.push({
+        type: 'module',
+        key: 'clients',
+        label: 'Clients & Facturation',
+        icon: Building2,
+        items: [
+          ...(canAccess('suppliers') || canAccess('clients') ? [{ 
+            path: '/contacts', 
+            label: 'Contacts', 
+            icon: ContactRound 
+          }] : []),
+          ...(canAccess('invoices') ? [{ 
+            path: '/invoices', 
+            label: 'Factures Clients', 
+            icon: FileText 
+          }] : [])
+        ]
       })
     }
 
-    // Invoices
-    if (canAccess('invoices')) {
-      items.push({ 
-        path: '/invoices', 
-        label: 'Factures Clients', 
-        icon: FileText 
-      })
-    }
-
-    // Statistics
+    // Statistics - standalone
     if (canAccess('statistics')) {
-      items.push({ 
+      modules.push({ 
+        type: 'single',
         path: '/statistics', 
         label: 'Statistiques', 
         icon: BarChart3 
       })
     }
 
-    // Contacts (unified view - replaces Suppliers and Clients)
-    if (canAccess('suppliers') || canAccess('clients')) {
-      items.push({ 
-        path: '/contacts', 
-        label: 'Contacts', 
-        icon: ContactRound 
-      })
-    }
-
-    // Products (includes category management)
-    if (canAccess('products')) {
-      items.push({ 
-        path: '/products', 
-        label: 'Produits', 
-        icon: Package 
-      })
-    }
-
-    return items
+    return modules
   }
 
-  const navigationItems = getNavigationItems()
+  const navigationModules = getModularNavigation()
 
   const isActive = (path) => {
     return location.pathname === path
+  }
+
+  const isModuleActive = (items) => {
+    return items.some(item => location.pathname === item.path)
   }
 
   return (
@@ -158,22 +201,65 @@ export default function Layout({ children }) {
           </Button>
         </div>
         
-        <nav className="mt-6 px-3">
-          <div className="space-y-1">
-            {navigationItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                  isActive(item.path)
-                    ? 'bg-white text-slate-900 shadow-lg'
-                    : 'text-white/90 hover:bg-white/10 hover:text-white'
-                }`}
-                onClick={() => setSidebarOpen(false)}
-              >
-                <item.icon className="mr-3 h-5 w-5" />
-                {item.label}
-              </Link>
+        <nav className="mt-6 px-3 overflow-y-auto max-h-[calc(100vh-5rem)]">
+          <div className="space-y-2">
+            {navigationModules.map((module) => (
+              module.type === 'single' ? (
+                // Single navigation item
+                <Link
+                  key={module.path}
+                  to={module.path}
+                  className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    isActive(module.path)
+                      ? 'bg-white text-slate-900 shadow-lg'
+                      : 'text-white/90 hover:bg-white/10 hover:text-white'
+                  }`}
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <module.icon className="mr-3 h-5 w-5" />
+                  {module.label}
+                </Link>
+              ) : (
+                // Module with collapsible sub-items
+                <Collapsible
+                  key={module.key}
+                  open={openModules[module.key]}
+                  onOpenChange={() => toggleModule(module.key)}
+                >
+                  <CollapsibleTrigger className={`w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    isModuleActive(module.items)
+                      ? 'bg-white/10 text-white'
+                      : 'text-white/90 hover:bg-white/10 hover:text-white'
+                  }`}>
+                    <div className="flex items-center">
+                      <module.icon className="mr-3 h-5 w-5" />
+                      {module.label}
+                    </div>
+                    {openModules[module.key] ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-1 ml-4 space-y-1">
+                    {module.items.map((item) => (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 ${
+                          isActive(item.path)
+                            ? 'bg-white text-slate-900 shadow-lg'
+                            : 'text-white/80 hover:bg-white/10 hover:text-white'
+                        }`}
+                        onClick={() => setSidebarOpen(false)}
+                      >
+                        <item.icon className="mr-3 h-4 w-4" />
+                        {item.label}
+                      </Link>
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
+              )
             ))}
           </div>
         </nav>
@@ -194,7 +280,18 @@ export default function Layout({ children }) {
                 <Menu className="h-6 w-6" />
               </Button>
               <h2 className="text-lg font-semibold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">
-                {navigationItems.find(item => isActive(item.path))?.label || 'Tableau de Bord'}
+                {(() => {
+                  // Find the active module or single item
+                  for (const module of navigationModules) {
+                    if (module.type === 'single' && isActive(module.path)) {
+                      return module.label
+                    } else if (module.type === 'module') {
+                      const activeItem = module.items.find(item => isActive(item.path))
+                      if (activeItem) return activeItem.label
+                    }
+                  }
+                  return 'Tableau de Bord'
+                })()}
               </h2>
             </div>
             
