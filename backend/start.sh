@@ -1,22 +1,6 @@
 #!/bin/bash
 
-# Render Sta# Run Invoice stand_id migration (make it nullable for direct invoice creation)
-echo ""
-echo "🔄 Running invoice migration (stand_id nullable)..."
-python auto_migrate_invoice.py
-
-if [ $? -ne 0 ]; then
-    echo "❌ Invoice migration failed! Continuing anyway..."
-fi
-
-# Run Contact Person/Enterprise migration
-echo ""
-echo "🔄 Running contact person/enterprise migration..."
-python migrate_contacts_person_enterprise.py
-
-if [ $? -ne 0 ]; then
-    echo "❌ Contact migration failed! Continuing anyway..."
-fiipt - Auto-initialize database on first run
+# Render Startup Script - Auto-initialize database on first run
 # This script runs before starting the Gunicorn server
 
 echo "=========================================="
@@ -46,6 +30,15 @@ python auto_migrate_invoice.py
 
 if [ $? -ne 0 ]; then
     echo "⚠️  Invoice migration had issues, continuing anyway..."
+fi
+
+# Run Contact Person/Enterprise migration
+echo ""
+echo "🔄 Running contact person/enterprise migration..."
+python migrate_contacts_person_enterprise.py
+
+if [ $? -ne 0 ]; then
+    echo "⚠️  Contact migration had issues, continuing anyway..."
 fi
 
 # Initialize database with sample data
