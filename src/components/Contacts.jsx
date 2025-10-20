@@ -485,14 +485,14 @@ const Contacts = () => {
                     <div>
                       <Label htmlFor="enterprise_id">Entreprise</Label>
                       <Select
-                        value={formData.enterprise_id?.toString() || ''}
-                        onValueChange={(value) => handleInputChange('enterprise_id', value ? parseInt(value) : null)}
+                        value={formData.enterprise_id?.toString() || 'none'}
+                        onValueChange={(value) => handleInputChange('enterprise_id', value === 'none' ? null : parseInt(value))}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Sélectionner une entreprise (optionnel)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Aucune</SelectItem>
+                          <SelectItem value="none">Aucune</SelectItem>
                           {enterprises.map(ent => (
                             <SelectItem key={ent.id} value={ent.id.toString()}>
                               {ent.name}
