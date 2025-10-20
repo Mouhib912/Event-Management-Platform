@@ -1899,6 +1899,31 @@ def generate_invoice_pdf(invoice_id):
     content.append(Spacer(1, 8))
     
     # ===== EMETTEUR / CLIENT SECTION =====
+    # Get client contact information for hierarchy display
+    client_display_name = invoice.client_name
+    
+    # Check if client is linked to a contact (for person/enterprise hierarchy)
+    if invoice.client_id:
+        try:
+            # Try to get contact through client relationship
+            # Since Client and Contact might be the same table or separate, handle both cases
+            contact = Contact.query.filter_by(id=invoice.client_id).first()
+            
+            if contact and contact.contact_nature == 'person' and contact.enterprise_id:
+                # Get the enterprise information
+                enterprise = Contact.query.get(contact.enterprise_id)
+                if enterprise:
+                    # Format: "Enterprise Name (Matricule Fiscal), à l'ordre de Person Name"
+                    enterprise_info = enterprise.name
+                    if enterprise.matricule_fiscal:
+                        enterprise_info += f" ({enterprise.matricule_fiscal})"
+                    client_display_name = f"{enterprise_info}<br/>à l'ordre de: <b>{contact.name}</b>"
+                    if contact.position:
+                        client_display_name += f" - {contact.position}"
+        except Exception as e:
+            print(f"Note: Could not load contact hierarchy: {e}")
+            # Continue with standard client name if there's an error
+    
     emetteur_client_data = [
         [
             Paragraph('<b>ÉMETTEUR:</b>', styles['Normal']),
@@ -1906,7 +1931,7 @@ def generate_invoice_pdf(invoice_id):
         ],
         [
             Paragraph(invoice.company_name or 'Event Management Platform', styles['Normal']),
-            Paragraph(invoice.client_name, styles['Normal'])
+            Paragraph(client_display_name, styles['Normal'])
         ]
     ]
     
