@@ -23,6 +23,7 @@ export default function Products() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterCategory, setFilterCategory] = useState('all')
   const [filterPricingType, setFilterPricingType] = useState('all')
+  const [filterUnit, setFilterUnit] = useState('all')
   const [sortBy, setSortBy] = useState('name')
   const [sortOrder] = useState('asc')
   
@@ -85,6 +86,12 @@ export default function Products() {
   // Check if user has permission to edit (Propriétaire, Commercial, or Logistique can edit products)
   const canEdit = user?.role && ['Propriétaire', 'Commercial', 'Logistique', 'admin', 'logistics'].includes(user.role)
 
+  // Get unique units from products
+  const getUniqueUnits = () => {
+    const units = [...new Set(products.map(p => p.unit).filter(Boolean))]
+    return units.sort()
+  }
+
   // Filter and sort products
   const getFilteredAndSortedProducts = () => {
     let filtered = products.filter(product => {
@@ -92,8 +99,9 @@ export default function Products() {
                            product.description?.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesCategory = filterCategory === 'all' || product.category_id?.toString() === filterCategory
       const matchesPricing = filterPricingType === 'all' || product.pricing_type === filterPricingType
+      const matchesUnit = filterUnit === 'all' || product.unit === filterUnit
       
-      return matchesSearch && matchesCategory && matchesPricing
+      return matchesSearch && matchesCategory && matchesPricing && matchesUnit
     })
 
     // Sort products
@@ -530,6 +538,21 @@ export default function Products() {
               </SelectContent>
             </Select>
 
+            <Select value={filterUnit} onValueChange={setFilterUnit}>
+              <SelectTrigger>
+                <Package className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Toutes unités" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Toutes unités</SelectItem>
+                {getUniqueUnits().map((unit) => (
+                  <SelectItem key={unit} value={unit}>
+                    {unit}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger>
                 <ArrowUpDown className="mr-2 h-4 w-4" />
@@ -564,7 +587,7 @@ export default function Products() {
             <Card>
               <CardContent className="flex items-center justify-center h-40">
                 <p className="text-muted-foreground">
-                  {searchTerm || filterCategory !== 'all' || filterPricingType !== 'all'
+                  {searchTerm || filterCategory !== 'all' || filterPricingType !== 'all' || filterUnit !== 'all'
                     ? 'Aucun produit trouvé pour ces critères.' 
                     : 'Aucun produit enregistré.'}
                 </p>

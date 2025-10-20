@@ -13,6 +13,7 @@ import toast from 'react-hot-toast'
 export default function StandSimulator() {
   const [standName, setStandName] = useState('')
   const [clientId, setClientId] = useState('')
+  const [clientSearch, setClientSearch] = useState('')
   const [clients, setClients] = useState([])
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
@@ -450,18 +451,102 @@ export default function StandSimulator() {
 
               <div>
                 <Label htmlFor="client">Client *</Label>
-                <Select value={clientId} onValueChange={setClientId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionnez un client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map(client => (
-                      <SelectItem key={client.id} value={client.id.toString()}>
-                        {client.name} {client.company && `- ${client.company}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      placeholder="Rechercher un client par nom, email ou entreprise..."
+                      value={clientSearch}
+                      onChange={(e) => setClientSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  
+                  {/* Selected Client Display */}
+                  {clientId && !clientSearch && (
+                    <div className="p-3 bg-blue-50 border-2 border-blue-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-blue-900">
+                            {clients.find(c => c.id.toString() === clientId)?.name}
+                          </p>
+                          {clients.find(c => c.id.toString() === clientId)?.company && (
+                            <p className="text-sm text-blue-600">
+                              {clients.find(c => c.id.toString() === clientId)?.company}
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setClientId('')
+                            setClientSearch('')
+                          }}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          Changer
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Client Search Results */}
+                  {clientSearch && (
+                    <div className="border rounded-lg max-h-60 overflow-y-auto">
+                      {clients
+                        .filter(client => {
+                          const search = clientSearch.toLowerCase()
+                          return (
+                            client.name.toLowerCase().includes(search) ||
+                            client.email?.toLowerCase().includes(search) ||
+                            client.company?.toLowerCase().includes(search) ||
+                            client.phone?.includes(search)
+                          )
+                        })
+                        .map(client => (
+                          <div
+                            key={client.id}
+                            className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
+                            onClick={() => {
+                              setClientId(client.id.toString())
+                              setClientSearch('')
+                            }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="font-medium">{client.name}</p>
+                                {client.company && (
+                                  <p className="text-sm text-gray-600">{client.company}</p>
+                                )}
+                                <div className="flex gap-3 text-xs text-gray-500 mt-1">
+                                  {client.email && <span>📧 {client.email}</span>}
+                                  {client.phone && <span>📱 {client.phone}</span>}
+                                </div>
+                              </div>
+                              <Button size="sm" variant="outline">
+                                Sélectionner
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      {clients.filter(client => {
+                        const search = clientSearch.toLowerCase()
+                        return (
+                          client.name.toLowerCase().includes(search) ||
+                          client.email?.toLowerCase().includes(search) ||
+                          client.company?.toLowerCase().includes(search)
+                        )
+                      }).length === 0 && (
+                        <div className="p-6 text-center text-gray-500">
+                          <p>Aucun client trouvé</p>
+                          <p className="text-xs mt-1">Essayez un autre terme de recherche</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {selectedProducts.length > 0 && (
