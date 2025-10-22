@@ -150,6 +150,7 @@ class Stand(db.Model):
     description = db.Column(db.Text)
     status = db.Column(db.String(20), default='draft')  # draft, validated_logistics, validated_finance, approved
     total_amount = db.Column(db.Float, nullable=False)
+    currency = db.Column(db.String(10), default='TND')  # Currency code (TND, EUR, USD, etc.)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     validated_logistics_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
@@ -176,6 +177,7 @@ class Purchase(db.Model):
     purchase_number = db.Column(db.String(20), unique=True, nullable=False)
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=False)
     total_amount = db.Column(db.Float, nullable=False)
+    currency = db.Column(db.String(10), default='TND')  # Currency code
     status = db.Column(db.String(20), default='pending')  # pending, approved, sent
     notes = db.Column(db.Text, nullable=True)  # Optional notes about the purchase
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -216,6 +218,8 @@ class Invoice(db.Model):
     tva_percentage = db.Column(db.Float, default=19)  # Customizable TVA rate
     # Product factor (multiplier for product prices: 1 or 1.5)
     product_factor = db.Column(db.Float, default=1)  # Price multiplier: 1 or 1.5
+    # Currency
+    currency = db.Column(db.String(10), default='TND')  # Currency code (TND, EUR, USD, etc.)
     # Payment tracking
     advance_payment = db.Column(db.Float, default=0)  # Amount paid upfront when signing
     # Status: 'devis' (initial quote), 'facture' (approved/signed), 'paid', 'cancelled'
@@ -1054,6 +1058,7 @@ def get_stands():
                 'status': s.status,
                 'total_amount': s.total_amount,
                 'total': s.total_amount,  # Alias for frontend compatibility
+                'currency': s.currency if hasattr(s, 'currency') else 'TND',  # Add currency
                 'created_at': s.created_at.isoformat(),
                 'creator': s.creator.name,
                 'items': [{
@@ -1094,6 +1099,7 @@ def create_stand():
         client_id=data.get('client_id'),
         description=data.get('description'),
         total_amount=data['total_amount'],
+        currency=data.get('currency', 'TND'),  # Get currency from request, default to TND
         status='approved',  # Stands are automatically approved
         created_by=current_user_id
     )
@@ -1139,6 +1145,7 @@ def create_stand():
             purchase_number=purchase_number,
             supplier_id=supplier_id,
             total_amount=supplier_total,
+            currency=stand.currency,  # Use same currency as stand
             status='pending',
             notes=f"Généré automatiquement pour le stand: {data['name']}",
             created_by=current_user_id
@@ -1653,6 +1660,7 @@ def get_invoices():
         'remise_type': inv.remise_type if hasattr(inv, 'remise_type') else 'percentage',
         'tva_percentage': inv.tva_percentage if hasattr(inv, 'tva_percentage') else 19,
         'product_factor': inv.product_factor if hasattr(inv, 'product_factor') else 1,
+        'currency': inv.currency if hasattr(inv, 'currency') else 'TND',  # Add currency
         'status': inv.status,
         'agent_name': inv.agent_name,
         'company_name': inv.company_name,
@@ -1688,6 +1696,7 @@ def get_invoice(invoice_id):
             'remise_type': invoice.remise_type if hasattr(invoice, 'remise_type') else 'percentage',
             'tva_percentage': invoice.tva_percentage if hasattr(invoice, 'tva_percentage') else 19,
             'product_factor': invoice.product_factor if hasattr(invoice, 'product_factor') else 1,
+            'currency': invoice.currency if hasattr(invoice, 'currency') else 'TND',  # Add currency
             'status': invoice.status,
             'agent_name': invoice.agent_name,
             'company_name': invoice.company_name,
@@ -1808,6 +1817,7 @@ def create_invoice():
         remise_type=remise_type,
         tva_percentage=tva_percentage,
         product_factor=data.get('product_factor', 1),  # Keep for backward compatibility
+        currency=data.get('currency', stand.currency if stand else 'TND'),  # Use stand currency or provided currency
         status='devis',  # Start as devis
         agent_name=current_user.name,
         company_name=data.get('company_name', 'Votre Entreprise'),
@@ -1977,6 +1987,9 @@ def get_invoice_items(invoice_id):
 def generate_invoice_pdf(invoice_id):
     invoice = Invoice.query.get_or_404(invoice_id)
     stand = invoice.stand if invoice.stand_id else None
+    
+    # Get currency from invoice, default to TND
+    currency = invoice.currency if hasattr(invoice, 'currency') and invoice.currency else 'TND'
     
     # Create PDF buffer
     buffer = io.BytesIO()
@@ -2201,8 +2214,8 @@ def generate_invoice_pdf(invoice_id):
             items_data.append([
                 Paragraph(description, styles['Normal']),
                 Paragraph(str(item.quantity), styles['Normal']),
-                Paragraph(f'{item.unit_price:.2f} TND', styles['Normal']),
-                Paragraph(f'<b>{item.total_price:.2f} TND</b>', styles['Normal'])
+                Paragraph(f'{item.unit_price:.2f} {currency}', styles['Normal']),
+                Paragraph(f'<b>{item.total_price:.2f} {currency}</b>', styles['Normal'])
             ])
     else:
         # Direct invoice (devis) - use InvoiceItem
@@ -2214,15 +2227,15 @@ def generate_invoice_pdf(invoice_id):
             items_data.append([
                 Paragraph(description, styles['Normal']),
                 Paragraph(str(item.quantity), styles['Normal']),
-                Paragraph(f'{item.unit_price:.2f} TND', styles['Normal']),
-                Paragraph(f'<b>{item.total_price:.2f} TND</b>', styles['Normal'])
+                Paragraph(f'{item.unit_price:.2f} {currency}', styles['Normal']),
+                Paragraph(f'<b>{item.total_price:.2f} {currency}</b>', styles['Normal'])
             ])
     
     # Add totals
     items_data.extend([
-        ['', '', Paragraph('<b>TOTAL HT:</b>', styles['Normal']), Paragraph(f'<b>{invoice.total_ht:.2f} TND</b>', styles['Normal'])],
-        ['', '', Paragraph('<b>TVA (19%):</b>', styles['Normal']), Paragraph(f'<b>{invoice.tva_amount:.2f} TND</b>', styles['Normal'])],
-        ['', '', Paragraph('<b>TOTAL TTC:</b>', styles['Normal']), Paragraph(f'<b>{invoice.total_ttc:.2f} TND</b>', styles['Normal'])],
+        ['', '', Paragraph('<b>TOTAL HT:</b>', styles['Normal']), Paragraph(f'<b>{invoice.total_ht:.2f} {currency}</b>', styles['Normal'])],
+        ['', '', Paragraph('<b>TVA (19%):</b>', styles['Normal']), Paragraph(f'<b>{invoice.tva_amount:.2f} {currency}</b>', styles['Normal'])],
+        ['', '', Paragraph('<b>TOTAL TTC:</b>', styles['Normal']), Paragraph(f'<b>{invoice.total_ttc:.2f} {currency}</b>', styles['Normal'])],
     ])
     
     items_table = Table(items_data, colWidths=[7*cm, 3*cm, 4*cm, 4*cm])
