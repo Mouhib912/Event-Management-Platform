@@ -9,11 +9,13 @@
 ## ✅ COMPLETED TASKS
 
 ### 1. Fixed Devis Editing Error ✅
+
 **Problem**: Error when trying to edit invoices: `"Unexpected token '<', "<!doctype "... is not valid JSON"`
 
 **Root Cause**: Missing GET endpoint for single invoice
 
-**Solution**: 
+**Solution**:
+
 - Added `GET /api/invoices/:id` endpoint in `backend/app.py`
 - Returns full invoice details including all fields
 
@@ -22,13 +24,16 @@
 ---
 
 ### 2. Fixed Devis PDF Download Error ✅
+
 **Problem**: PDF download failing with 400 error: "Invoice stand not found"
 
-**Root Cause**: 
+**Root Cause**:
+
 - PDF endpoint checked for `invoice.stand.items`
 - Direct invoices (devis) don't have stands, they use `InvoiceItem` table
 
 **Solution**:
+
 - Updated `download_invoice_pdf()` to check both stand items and InvoiceItem
 - Modified `generate_invoice_pdf()` to handle both data sources:
   ```python
@@ -45,6 +50,7 @@
 ### 3. Currency Support - Backend ✅
 
 #### Database Migration
+
 - Created `backend/add_currency_fields.py` migration script
 - Added `currency VARCHAR(10) DEFAULT 'TND'` to:
   - `stand` table
@@ -53,11 +59,12 @@
 - Migration ran successfully ✅
 
 #### Model Updates (`backend/app.py`)
+
 ```python
 # Stand model
 currency = db.Column(db.String(10), default='TND')
 
-# Purchase model  
+# Purchase model
 currency = db.Column(db.String(10), default='TND')
 
 # Invoice model
@@ -65,7 +72,9 @@ currency = db.Column(db.String(10), default='TND')
 ```
 
 #### API Endpoints Updated
+
 - **POST /api/stands**: Accepts `currency` parameter
+
   ```python
   stand = Stand(
       name=data['name'],
@@ -75,6 +84,7 @@ currency = db.Column(db.String(10), default='TND')
   ```
 
 - **POST /api/invoices**: Accepts `currency` (inherits from stand if available)
+
   ```python
   currency=data.get('currency', stand.currency if stand else 'TND')
   ```
@@ -84,6 +94,7 @@ currency = db.Column(db.String(10), default='TND')
 - **GET /api/invoices/:id**: Returns `currency` field
 
 #### PDF Generation Updated
+
 - Extract currency from invoice: `currency = invoice.currency or 'TND'`
 - Replace all hardcoded "TND" strings with dynamic currency variable
 - Updated item prices, totals, TVA amounts to use selected currency
@@ -97,11 +108,13 @@ currency = db.Column(db.String(10), default='TND')
 #### Changes to `src/components/StandSimulator.jsx`:
 
 1. **Added State**:
+
    ```javascript
-   const [currency, setCurrency] = useState('TND')
+   const [currency, setCurrency] = useState('TND');
    ```
 
 2. **Added Currency Selector** (after Stand Name field):
+
    ```jsx
    <div>
      <Label htmlFor="currency">Devise *</Label>
@@ -120,18 +133,22 @@ currency = db.Column(db.String(10), default='TND')
    ```
 
 3. **Updated saveStand()**: Include currency in API payload
+
    ```javascript
    const standData = {
-       name: standName,
-       client_id: parseInt(clientId),
-       currency: currency,  // ← Added
-       // ...
-   }
+     name: standName,
+     client_id: parseInt(clientId),
+     currency: currency, // ← Added
+     // ...
+   };
    ```
 
 4. **Updated Total Display**:
+
    ```jsx
-   <span>{calculateTotal().toFixed(2)} {currency}</span>
+   <span>
+     {calculateTotal().toFixed(2)} {currency}
+   </span>
    ```
 
 5. **Reset Form**: Added `setCurrency('TND')` to form reset
@@ -145,19 +162,24 @@ currency = db.Column(db.String(10), default='TND')
 #### Changes to `src/components/Invoices.jsx`:
 
 1. **Added to FormData State**:
+
    ```javascript
    const [formData, setFormData] = useState({
-       // ... existing fields
-       currency: 'TND',  // ← Added
-       // ...
+     // ... existing fields
+     currency: 'TND', // ← Added
+     // ...
    });
    ```
 
 2. **Added Currency Selector** (after TVA field):
+
    ```jsx
    <div>
      <Label htmlFor="currency">Devise</Label>
-     <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
+     <Select
+       value={formData.currency}
+       onValueChange={(value) => handleInputChange('currency', value)}
+     >
        <SelectTrigger>
          <SelectValue placeholder="Sélectionner une devise" />
        </SelectTrigger>
@@ -172,34 +194,85 @@ currency = db.Column(db.String(10), default='TND')
    ```
 
 3. **Updated Invoice List Display**:
+
    ```jsx
-   {/* Total HT column */}
-   <TableCell>{invoice.total_ht.toFixed(2)} {invoice.currency || 'TND'}</TableCell>
-   
-   {/* TVA column */}
-   <TableCell>{invoice.tva_amount.toFixed(2)} {invoice.currency || 'TND'}</TableCell>
-   
-   {/* Total TTC column */}
-   <TableCell>{invoice.total_ttc.toFixed(2)} {invoice.currency || 'TND'}</TableCell>
-   
-   {/* Advance payment column */}
-   {(invoice.advance_payment || 0).toFixed(2)} {invoice.currency || 'TND'}
-   
-   {/* Remaining amount */}
-   {(invoice.total_ttc - (invoice.advance_payment || 0)).toFixed(2)} {invoice.currency || 'TND'}
+   {
+     /* Total HT column */
+   }
+   <TableCell>
+     {invoice.total_ht.toFixed(2)} {invoice.currency || 'TND'}
+   </TableCell>;
+
+   {
+     /* TVA column */
+   }
+   <TableCell>
+     {invoice.tva_amount.toFixed(2)} {invoice.currency || 'TND'}
+   </TableCell>;
+
+   {
+     /* Total TTC column */
+   }
+   <TableCell>
+     {invoice.total_ttc.toFixed(2)} {invoice.currency || 'TND'}
+   </TableCell>;
+
+   {
+     /* Advance payment column */
+   }
+   {
+     (invoice.advance_payment || 0).toFixed(2);
+   }
+   {
+     invoice.currency || 'TND';
+   }
+
+   {
+     /* Remaining amount */
+   }
+   {
+     (invoice.total_ttc - (invoice.advance_payment || 0)).toFixed(2);
+   }
+   {
+     invoice.currency || 'TND';
+   }
    ```
 
 4. **Updated Signing Dialog**:
+
    ```jsx
-   {/* Total display */}
-   {selectedInvoiceForSigning.total_ttc.toFixed(2)} {selectedInvoiceForSigning.currency || 'TND'}
-   
-   {/* Advance payment label */}
-   <Label>Montant de l'Acompte ({selectedInvoiceForSigning?.currency || 'TND'})</Label>
-   
-   {/* Payment breakdown */}
-   {advancePayment.toFixed(2)} {selectedInvoiceForSigning.currency || 'TND'}
-   {(selectedInvoiceForSigning.total_ttc - advancePayment).toFixed(2)} {selectedInvoiceForSigning.currency || 'TND'}
+   {
+     /* Total display */
+   }
+   {
+     selectedInvoiceForSigning.total_ttc.toFixed(2);
+   }
+   {
+     selectedInvoiceForSigning.currency || 'TND';
+   }
+
+   {
+     /* Advance payment label */
+   }
+   <Label>
+     Montant de l'Acompte ({selectedInvoiceForSigning?.currency || 'TND'})
+   </Label>;
+
+   {
+     /* Payment breakdown */
+   }
+   {
+     advancePayment.toFixed(2);
+   }
+   {
+     selectedInvoiceForSigning.currency || 'TND';
+   }
+   {
+     (selectedInvoiceForSigning.total_ttc - advancePayment).toFixed(2);
+   }
+   {
+     selectedInvoiceForSigning.currency || 'TND';
+   }
    ```
 
 **Commit**: `0b26a519`
@@ -213,6 +286,7 @@ currency = db.Column(db.String(10), default='TND')
 The Achat (Purchase Orders) page still needs currency selector added.
 
 **Steps to Complete**:
+
 1. Add `currency` state to Achat.jsx
 2. Add currency selector dropdown
 3. Include currency in purchase creation API call
@@ -225,18 +299,21 @@ The Achat (Purchase Orders) page still needs currency selector added.
 ## 📊 Testing Instructions
 
 ### Test Devis Editing:
+
 1. ✅ Go to Factures/Devis page
 2. ✅ Click Edit button on any devis
 3. ✅ Form should load with existing data
 4. ✅ Make changes and save
 
 ### Test Devis PDF Download:
+
 1. ✅ Go to Factures/Devis page
 2. ✅ Click Download PDF button on any devis
 3. ✅ PDF should download successfully
 4. ✅ PDF shows correct currency
 
 ### Test Currency in Stand Creation:
+
 1. ✅ Go to Simulateur de Stand
 2. ✅ Fill in stand name
 3. ✅ **Select currency** (TND, EUR, USD, or GBP)
@@ -246,6 +323,7 @@ The Achat (Purchase Orders) page still needs currency selector added.
 7. ✅ Check Catalogue des Stands - currency is saved
 
 ### Test Currency in Invoice Creation:
+
 1. ✅ Go to Factures/Devis
 2. ✅ Click "Créer Facture/Devis"
 3. ✅ Choose stand-based OR direct creation
@@ -255,6 +333,7 @@ The Achat (Purchase Orders) page still needs currency selector added.
 7. ✅ Download PDF - currency appears throughout document
 
 ### Test Currency Inheritance:
+
 1. ✅ Create stand with EUR currency
 2. ✅ Create invoice from that stand
 3. ✅ Invoice should inherit EUR currency
@@ -265,14 +344,17 @@ The Achat (Purchase Orders) page still needs currency selector added.
 ## 📁 Files Modified
 
 ### Backend:
+
 - ✅ `backend/app.py` - Models, API endpoints, PDF generation
 - ✅ `backend/add_currency_fields.py` - Migration script
 
 ### Frontend:
+
 - ✅ `src/components/StandSimulator.jsx` - Stand creation with currency
 - ✅ `src/components/Invoices.jsx` - Invoice creation and display with currency
 
 ### Documentation:
+
 - ✅ `CURRENCY_IMPLEMENTATION.md` - Implementation guide
 
 ---
@@ -280,11 +362,12 @@ The Achat (Purchase Orders) page still needs currency selector added.
 ## 🎯 Feature Complete!
 
 All core functionality is implemented and tested:
+
 - ✅ Devis editing works
 - ✅ Devis PDF download works
 - ✅ Currency database fields added
 - ✅ Currency in Stand creation
-- ✅ Currency in Invoice creation  
+- ✅ Currency in Invoice creation
 - ✅ Currency in PDFs
 - ✅ Currency display throughout UI
 
@@ -303,6 +386,7 @@ All core functionality is implemented and tested:
 ## 📝 Next Steps (Optional)
 
 If you want to add currency to Purchase Orders:
+
 1. Update `src/components/Achat.jsx`
 2. Follow same pattern as StandSimulator and Invoices
 3. Add currency selector to purchase creation form

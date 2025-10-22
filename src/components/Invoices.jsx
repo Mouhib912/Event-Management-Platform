@@ -46,6 +46,7 @@ const Invoices = () => {
     remise: 0,
     remise_type: 'percentage',
     tva_percentage: 19,
+    timbre_fiscale: 0,
     product_factor: 1
   });
 
@@ -240,12 +241,14 @@ const Invoices = () => {
     
     // Apply TVA
     const tvaAmount = totalHT * (formData.tva_percentage / 100);
-    const totalTTC = totalHT + tvaAmount;
+    const timbreFiscale = parseFloat(formData.timbre_fiscale || 0);
+    const totalTTC = totalHT + tvaAmount + timbreFiscale;
     
     return {
       subtotal: subtotal.toFixed(2),
       totalHT: totalHT.toFixed(2),
       tvaAmount: tvaAmount.toFixed(2),
+      timbreFiscale: timbreFiscale.toFixed(2),
       totalTTC: totalTTC.toFixed(2)
     };
   };
@@ -321,9 +324,11 @@ const Invoices = () => {
       company_address: '',
       company_phone: '',
       company_email: '',
+      currency: 'TND',
       remise: 0,
       remise_type: 'percentage',
       tva_percentage: 19,
+      timbre_fiscale: 0,
       product_factor: 1
     });
   };
@@ -364,9 +369,11 @@ const Invoices = () => {
         company_address: invoice.company_address || '',
         company_phone: invoice.company_phone || '',
         company_email: invoice.company_email || '',
+        currency: invoice.currency || 'TND',
         remise: invoice.remise || 0,
         remise_type: invoice.remise_type || 'percentage',
         tva_percentage: invoice.tva_percentage || 19,
+        timbre_fiscale: invoice.timbre_fiscale || 0,
         product_factor: invoice.product_factor || 1
       });
       
@@ -981,16 +988,22 @@ const Invoices = () => {
                         )}
                         <div className="flex justify-between text-sm">
                           <span>Total HT:</span>
-                          <span className="font-semibold">{calculateTotal().totalHT} TND</span>
+                          <span className="font-semibold">{calculateTotal().totalHT} {formData.currency}</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span>TVA ({formData.tva_percentage}%):</span>
-                          <span className="font-semibold">{calculateTotal().tvaAmount} TND</span>
+                          <span className="font-semibold">{calculateTotal().tvaAmount} {formData.currency}</span>
                         </div>
+                        {formData.timbre_fiscale > 0 && (
+                          <div className="flex justify-between text-sm">
+                            <span>Timbre Fiscale:</span>
+                            <span className="font-semibold">{calculateTotal().timbreFiscale} {formData.currency}</span>
+                          </div>
+                        )}
                         <Separator />
                         <div className="flex justify-between text-lg font-bold text-blue-700">
                           <span>Total TTC:</span>
-                          <span>{calculateTotal().totalTTC} TND</span>
+                          <span>{calculateTotal().totalTTC} {formData.currency}</span>
                         </div>
                       </div>
                     </CardContent>
@@ -1065,6 +1078,19 @@ const Invoices = () => {
                         <SelectItem value="GBP">GBP - Livre Sterling</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Timbre Fiscale */}
+                  <div>
+                    <Label htmlFor="timbre_fiscale">Timbre Fiscale ({formData.currency})</Label>
+                    <Input
+                      id="timbre_fiscale"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={formData.timbre_fiscale}
+                      onChange={(e) => handleInputChange('timbre_fiscale', parseFloat(e.target.value) || 0)}
+                    />
                   </div>
                 </div>
               </div>
