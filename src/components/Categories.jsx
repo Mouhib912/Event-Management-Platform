@@ -43,8 +43,8 @@ export default function Categories() {
     }
   }
 
-  // Only Propriétaire can edit categories
-  const canEdit = user?.role === 'Propriétaire'
+  // Only Propriétaire/Admin can edit categories
+  const canEdit = user?.role === 'Propriétaire' || user?.role === 'Admin' || user?.role === 'admin'
 
   const filteredCategories = categories.filter(category =>
     category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
