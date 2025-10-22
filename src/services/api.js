@@ -252,6 +252,17 @@ class ApiService {
     })
   }
 
+  async getStandItems(standId) {
+    return this.request(`/stands/${standId}/items`)
+  }
+
+  async updateStandItems(standId, items) {
+    return this.request(`/stands/${standId}/items`, {
+      method: 'PUT',
+      body: JSON.stringify({ items }),
+    })
+  }
+
   async deleteStand(standId) {
     return this.request(`/stands/${standId}`, {
       method: 'DELETE',

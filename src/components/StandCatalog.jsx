@@ -28,12 +28,16 @@ export default function StandCatalog() {
   const [selectedStand, setSelectedStand] = useState(null)
   const [showDetailsDialog, setShowDetailsDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
+  const [showEditProductsDialog, setShowEditProductsDialog] = useState(false)
   const [editingStand, setEditingStand] = useState(null)
   const [editFormData, setEditFormData] = useState({
     name: '',
     client_id: '',
     description: ''
   })
+  const [editingStandItems, setEditingStandItems] = useState([])
+  const [allProducts, setAllProducts] = useState([])
+  const [loadingProducts, setLoadingProducts] = useState(false)
 
   useEffect(() => {
     loadStands()
@@ -153,6 +157,104 @@ export default function StandCatalog() {
     }
   }
 
+  const handleEditProducts = async (stand) => {
+    setEditingStand(stand)
+    setLoadingProducts(true)
+    
+    try {
+      // Load products and stand items in parallel
+      const [productsData, standItemsData] = await Promise.all([
+        apiService.getProducts(),
+        apiService.getStandItems(stand.id)
+      ])
+      
+      setAllProducts(productsData)
+      setEditingStandItems(standItemsData)
+      setShowEditProductsDialog(true)
+    } catch (error) {
+      console.error('Error loading products:', error)
+      toast.error('Erreur lors du chargement des produits')
+    } finally {
+      setLoadingProducts(false)
+    }
+  }
+
+  const handleAddProduct = (product) => {
+    // Check if product already exists
+    const exists = editingStandItems.find(item => item.product_id === product.id)
+    if (exists) {
+      toast.error('Ce produit est déjà dans le stand')
+      return
+    }
+
+    // Add product with default values
+    const newItem = {
+      product_id: product.id,
+      product_name: product.name,
+      quantity: 1,
+      days: 1,
+      unit_price: product.price,
+      total_price: product.price
+    }
+    
+    setEditingStandItems(prev => [...prev, newItem])
+  }
+
+  const handleRemoveProduct = (productId) => {
+    setEditingStandItems(prev => prev.filter(item => item.product_id !== productId))
+  }
+
+  const handleUpdateItemQuantity = (productId, quantity) => {
+    setEditingStandItems(prev => prev.map(item => {
+      if (item.product_id === productId) {
+        const newQuantity = Math.max(1, parseInt(quantity) || 1)
+        return {
+          ...item,
+          quantity: newQuantity,
+          total_price: newQuantity * item.days * item.unit_price
+        }
+      }
+      return item
+    }))
+  }
+
+  const handleUpdateItemDays = (productId, days) => {
+    setEditingStandItems(prev => prev.map(item => {
+      if (item.product_id === productId) {
+        const newDays = Math.max(1, parseInt(days) || 1)
+        return {
+          ...item,
+          days: newDays,
+          total_price: item.quantity * newDays * item.unit_price
+        }
+      }
+      return item
+    }))
+  }
+
+  const calculateEditingTotal = () => {
+    return editingStandItems.reduce((sum, item) => sum + item.total_price, 0)
+  }
+
+  const handleSaveProducts = async () => {
+    if (editingStandItems.length === 0) {
+      toast.error('Veuillez ajouter au moins un produit')
+      return
+    }
+
+    try {
+      await apiService.updateStandItems(editingStand.id, editingStandItems)
+      toast.success('Produits mis à jour avec succès!')
+      setShowEditProductsDialog(false)
+      setEditingStand(null)
+      setEditingStandItems([])
+      loadStands() // Reload stands to get updated data
+    } catch (error) {
+      console.error('Error updating stand products:', error)
+      toast.error('Erreur lors de la mise à jour des produits')
+    }
+  }
+
   if (!canView) {
     return (
       <div className="text-center py-8">
@@ -252,9 +354,17 @@ export default function StandCatalog() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleEdit(stand)}
-                      title="Modifier"
+                      title="Modifier le nom et description"
                     >
                       <Edit2 className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditProducts(stand)}
+                      title="Modifier les produits"
+                    >
+                      <Package className="h-3 w-3" />
                     </Button>
                     <Button
                       variant="outline"
@@ -472,6 +582,139 @@ export default function StandCatalog() {
               </Button>
               <Button onClick={handleUpdateStand}>
                 Enregistrer
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Products Dialog */}
+      <Dialog open={showEditProductsDialog} onOpenChange={setShowEditProductsDialog}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Modifier les Produits du Stand</DialogTitle>
+            <DialogDescription>
+              {editingStand?.name} - Ajoutez, modifiez ou supprimez des produits
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Current Products */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Produits actuels ({editingStandItems.length})</h3>
+              {editingStandItems.length === 0 ? (
+                <p className="text-muted-foreground text-sm">Aucun produit sélectionné</p>
+              ) : (
+                <div className="space-y-2">
+                  {editingStandItems.map((item) => (
+                    <Card key={item.product_id}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <p className="font-medium">{item.product_name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Prix unitaire: {item.unit_price.toFixed(2)} {editingStand?.currency || 'TND'}
+                            </p>
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <div>
+                              <Label className="text-xs">Quantité</Label>
+                              <Input
+                                type="number"
+                                min="1"
+                                value={item.quantity}
+                                onChange={(e) => handleUpdateItemQuantity(item.product_id, e.target.value)}
+                                className="w-20"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs">Jours</Label>
+                              <Input
+                                type="number"
+                                min="1"
+                                value={item.days}
+                                onChange={(e) => handleUpdateItemDays(item.product_id, e.target.value)}
+                                className="w-20"
+                              />
+                            </div>
+                            
+                            <div>
+                              <Label className="text-xs">Total</Label>
+                              <p className="text-sm font-bold text-blue-600 mt-2">
+                                {item.total_price.toFixed(2)} {editingStand?.currency || 'TND'}
+                              </p>
+                            </div>
+                            
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveProduct(item.product_id)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+              
+              {/* Total */}
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-lg">Total du Stand:</span>
+                  <span className="font-bold text-xl text-blue-600">
+                    {calculateEditingTotal().toFixed(2)} {editingStand?.currency || 'TND'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Add Products */}
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Ajouter des Produits</h3>
+              {loadingProducts ? (
+                <p>Chargement des produits...</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto">
+                  {allProducts
+                    .filter(product => !editingStandItems.find(item => item.product_id === product.id))
+                    .map((product) => (
+                      <Card key={product.id} className="cursor-pointer hover:bg-gray-50" onClick={() => handleAddProduct(product)}>
+                        <CardContent className="p-3">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="font-medium text-sm">{product.name}</p>
+                              <p className="text-xs text-muted-foreground">{product.category}</p>
+                            </div>
+                            <p className="font-bold text-sm">{product.price} TND</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                </div>
+              )}
+            </div>
+            
+            {/* Actions */}
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowEditProductsDialog(false)
+                  setEditingStandItems([])
+                  setAllProducts([])
+                }}
+              >
+                Annuler
+              </Button>
+              <Button onClick={handleSaveProducts}>
+                <Package className="mr-2 h-4 w-4" />
+                Enregistrer les Modifications
               </Button>
             </div>
           </div>

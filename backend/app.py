@@ -1217,6 +1217,79 @@ def update_stand(stand_id):
         print(f"Error updating stand: {str(e)}")
         return jsonify({'message': f'Error updating stand: {str(e)}'}), 500
 
+@app.route('/api/stands/<int:stand_id>/items', methods=['GET'])
+@jwt_required()
+def get_stand_items(stand_id):
+    """Get all items for a specific stand"""
+    try:
+        stand = Stand.query.get_or_404(stand_id)
+        items = StandItem.query.filter_by(stand_id=stand_id).all()
+        
+        return jsonify([{
+            'id': item.id,
+            'product_id': item.product_id,
+            'product_name': item.product.name if item.product else 'Unknown',
+            'quantity': item.quantity,
+            'days': item.days,
+            'unit_price': item.unit_price,
+            'total_price': item.total_price
+        } for item in items]), 200
+    except Exception as e:
+        print(f"Error getting stand items: {str(e)}")
+        return jsonify({'message': f'Error getting stand items: {str(e)}'}), 500
+
+@app.route('/api/stands/<int:stand_id>/items', methods=['PUT'])
+@jwt_required()
+def update_stand_items(stand_id):
+    """Update items for a specific stand"""
+    try:
+        current_user_id = int(get_jwt_identity())
+        stand = Stand.query.get_or_404(stand_id)
+        
+        # Check if user is the creator or has permission
+        current_user = User.query.get(current_user_id)
+        user_role = get_mapped_role(current_user.role)
+        
+        if stand.created_by != current_user_id and user_role not in ['Commercial', 'Propriétaire']:
+            return jsonify({'message': 'Unauthorized'}), 403
+        
+        data = request.get_json()
+        items_data = data.get('items', [])
+        
+        # Delete existing stand items
+        StandItem.query.filter_by(stand_id=stand_id).delete()
+        
+        # Add new items and calculate total
+        total_amount = 0
+        for item_data in items_data:
+            item = StandItem(
+                stand_id=stand.id,
+                product_id=item_data['product_id'],
+                quantity=item_data['quantity'],
+                days=item_data.get('days', 1),
+                unit_price=item_data['unit_price'],
+                total_price=item_data['total_price']
+            )
+            db.session.add(item)
+            total_amount += item_data['total_price']
+        
+        # Update stand total
+        stand.total_amount = total_amount
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Stand items updated successfully',
+            'stand_id': stand.id,
+            'total_amount': total_amount
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating stand items: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'message': f'Error updating stand items: {str(e)}'}), 500
+
 @app.route('/api/stands/<int:stand_id>/validate-logistics', methods=['POST'])
 @jwt_required()
 def validate_logistics(stand_id):
