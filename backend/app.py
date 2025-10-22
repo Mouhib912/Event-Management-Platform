@@ -1796,140 +1796,140 @@ def create_invoice():
         current_user = User.query.get(current_user_id)
         data = request.get_json()
     
-    # Check creation mode - stand-based or direct
-    use_stand = data.get('use_stand', True)
-    
-    # Stand-based mode
-    if use_stand:
-        # Verify stand exists and is approved
-        stand = Stand.query.get_or_404(data['stand_id'])
-        if stand.status != 'approved':
-            return jsonify({'error': 'Stand must be approved before creating invoice'}), 400
+        # Check creation mode - stand-based or direct
+        use_stand = data.get('use_stand', True)
         
-        # Get client info from stand
-        client = None
-        if stand.client_id:
-            client = Client.query.get(stand.client_id)
-        
-        stand_id = data['stand_id']
-        client_id = stand.client_id
-        default_client_name = client.name if client else 'Client'
-        default_client_email = client.email if client else ''
-        default_client_phone = client.phone if client else ''
-        default_client_address = client.address if client else ''
-        default_client_company = client.company if client else ''
-    # Direct mode - no stand required
-    else:
-        stand = None
-        stand_id = None
-        client_id = data.get('client_id')
-        
-        # Get client info from contact if client_id provided
-        if client_id:
-            contact = Contact.query.get(client_id)
-            default_client_name = contact.name if contact else data.get('client_name', 'Client')
-            default_client_email = contact.email if contact else data.get('client_email', '')
-            default_client_phone = contact.phone if contact else data.get('client_phone', '')
-            default_client_address = contact.address if contact else data.get('client_address', '')
-            default_client_company = contact.company if contact else data.get('client_company', '')
+        # Stand-based mode
+        if use_stand:
+            # Verify stand exists and is approved
+            stand = Stand.query.get_or_404(data['stand_id'])
+            if stand.status != 'approved':
+                return jsonify({'error': 'Stand must be approved before creating invoice'}), 400
+            
+            # Get client info from stand
+            client = None
+            if stand.client_id:
+                client = Client.query.get(stand.client_id)
+            
+            stand_id = data['stand_id']
+            client_id = stand.client_id
+            default_client_name = client.name if client else 'Client'
+            default_client_email = client.email if client else ''
+            default_client_phone = client.phone if client else ''
+            default_client_address = client.address if client else ''
+            default_client_company = client.company if client else ''
+        # Direct mode - no stand required
         else:
-            # Use provided client info directly
-            default_client_name = data.get('client_name', 'Client')
-            default_client_email = data.get('client_email', '')
-            default_client_phone = data.get('client_phone', '')
-            default_client_address = data.get('client_address', '')
-            default_client_company = data.get('client_company', '')
-    
-    # Generate devis number (will be converted to invoice number when approved)
-    invoice_count = Invoice.query.count() + 1
-    invoice_number = f"DEV-{datetime.now().year}-{invoice_count:04d}"
-    
-    # Get discount/remise values
-    remise = float(data.get('remise', 0))
-    remise_type = data.get('remise_type', 'percentage')
-    tva_percentage = float(data.get('tva_percentage', 19))
-    
-    # Get modified items from frontend (includes individual factors per product)
-    modified_items = data.get('modified_items', [])
-    
-    # Calculate totals from modified items
-    if modified_items:
-        # Use the modified items with individual factors
-        subtotal = sum(item['total_price'] for item in modified_items)
-    elif use_stand and stand:
-        # Fallback to original stand total with global factor (backward compatibility)
-        product_factor = float(data.get('product_factor', 1))
-        subtotal = stand.total_amount * product_factor
-    else:
-        # Direct mode with no items
-        return jsonify({'error': 'No products provided for invoice'}), 400
-    
-    # Apply remise based on type
-    if remise > 0:
-        if remise_type == 'percentage':
-            remise_amount = subtotal * (remise / 100)
-        else:  # fixed
-            remise_amount = remise
-        total_ht = subtotal - remise_amount
-    else:
-        total_ht = subtotal
-    
-    # Calculate TVA with custom percentage
-    tva_amount = total_ht * (tva_percentage / 100)
-    
-    # Add timbre fiscale
-    timbre_fiscale = float(data.get('timbre_fiscale', 0))
-    
-    # Calculate total TTC (including timbre fiscale)
-    total_ttc = total_ht + tva_amount + timbre_fiscale
-    
-    # Use provided client info from form, fallback to defaults
-    invoice = Invoice(
-        invoice_number=invoice_number,
-        stand_id=stand_id,
-        client_id=client_id,
-        client_name=data.get('client_name') or default_client_name,
-        client_email=data.get('client_email') or default_client_email,
-        client_phone=data.get('client_phone') or default_client_phone,
-        client_address=data.get('client_address') or default_client_address,
-        client_company=data.get('client_company') or default_client_company,
-        total_ht=total_ht,
-        tva_amount=tva_amount,
-        total_ttc=total_ttc,
-        remise=remise,
-        remise_type=remise_type,
-        tva_percentage=tva_percentage,
-        product_factor=data.get('product_factor', 1),  # Keep for backward compatibility
-        currency=data.get('currency', stand.currency if stand else 'TND'),  # Use stand currency or provided currency
-        timbre_fiscale=timbre_fiscale,  # Add timbre fiscale
-        status='devis',  # Start as devis
-        agent_name=current_user.name,
-        company_name=data.get('company_name', 'Votre Entreprise'),
-        company_address=data.get('company_address'),
-        company_phone=data.get('company_phone'),
-        company_email=data.get('company_email'),
-        created_by=current_user_id
-    )
-    
-    db.session.add(invoice)
-    db.session.flush()  # Get the invoice ID
-    
-    # Save modified items to InvoiceItem table
-    if modified_items:
-        for item in modified_items:
-            product = Product.query.get(item.get('product_id'))
-            invoice_item = InvoiceItem(
-                invoice_id=invoice.id,
-                product_id=item.get('product_id'),
-                product_name=item.get('product_name', product.name if product else 'Produit'),
-                quantity=item.get('quantity', 1),
-                days=item.get('days', 1),
-                unit_price=item.get('unit_price', 0),
-                factor=item.get('factor', 1),
-                total_price=item.get('total_price', 0)
-            )
-            db.session.add(invoice_item)
-    
+            stand = None
+            stand_id = None
+            client_id = data.get('client_id')
+            
+            # Get client info from contact if client_id provided
+            if client_id:
+                contact = Contact.query.get(client_id)
+                default_client_name = contact.name if contact else data.get('client_name', 'Client')
+                default_client_email = contact.email if contact else data.get('client_email', '')
+                default_client_phone = contact.phone if contact else data.get('client_phone', '')
+                default_client_address = contact.address if contact else data.get('client_address', '')
+                default_client_company = contact.company if contact else data.get('client_company', '')
+            else:
+                # Use provided client info directly
+                default_client_name = data.get('client_name', 'Client')
+                default_client_email = data.get('client_email', '')
+                default_client_phone = data.get('client_phone', '')
+                default_client_address = data.get('client_address', '')
+                default_client_company = data.get('client_company', '')
+        
+        # Generate devis number (will be converted to invoice number when approved)
+        invoice_count = Invoice.query.count() + 1
+        invoice_number = f"DEV-{datetime.now().year}-{invoice_count:04d}"
+        
+        # Get discount/remise values
+        remise = float(data.get('remise', 0))
+        remise_type = data.get('remise_type', 'percentage')
+        tva_percentage = float(data.get('tva_percentage', 19))
+        
+        # Get modified items from frontend (includes individual factors per product)
+        modified_items = data.get('modified_items', [])
+        
+        # Calculate totals from modified items
+        if modified_items:
+            # Use the modified items with individual factors
+            subtotal = sum(item['total_price'] for item in modified_items)
+        elif use_stand and stand:
+            # Fallback to original stand total with global factor (backward compatibility)
+            product_factor = float(data.get('product_factor', 1))
+            subtotal = stand.total_amount * product_factor
+        else:
+            # Direct mode with no items
+            return jsonify({'error': 'No products provided for invoice'}), 400
+        
+        # Apply remise based on type
+        if remise > 0:
+            if remise_type == 'percentage':
+                remise_amount = subtotal * (remise / 100)
+            else:  # fixed
+                remise_amount = remise
+            total_ht = subtotal - remise_amount
+        else:
+            total_ht = subtotal
+        
+        # Calculate TVA with custom percentage
+        tva_amount = total_ht * (tva_percentage / 100)
+        
+        # Add timbre fiscale
+        timbre_fiscale = float(data.get('timbre_fiscale', 0))
+        
+        # Calculate total TTC (including timbre fiscale)
+        total_ttc = total_ht + tva_amount + timbre_fiscale
+        
+        # Use provided client info from form, fallback to defaults
+        invoice = Invoice(
+            invoice_number=invoice_number,
+            stand_id=stand_id,
+            client_id=client_id,
+            client_name=data.get('client_name') or default_client_name,
+            client_email=data.get('client_email') or default_client_email,
+            client_phone=data.get('client_phone') or default_client_phone,
+            client_address=data.get('client_address') or default_client_address,
+            client_company=data.get('client_company') or default_client_company,
+            total_ht=total_ht,
+            tva_amount=tva_amount,
+            total_ttc=total_ttc,
+            remise=remise,
+            remise_type=remise_type,
+            tva_percentage=tva_percentage,
+            product_factor=data.get('product_factor', 1),  # Keep for backward compatibility
+            currency=data.get('currency', stand.currency if stand else 'TND'),  # Use stand currency or provided currency
+            timbre_fiscale=timbre_fiscale,  # Add timbre fiscale
+            status='devis',  # Start as devis
+            agent_name=current_user.name,
+            company_name=data.get('company_name', 'Votre Entreprise'),
+            company_address=data.get('company_address'),
+            company_phone=data.get('company_phone'),
+            company_email=data.get('company_email'),
+            created_by=current_user_id
+        )
+        
+        db.session.add(invoice)
+        db.session.flush()  # Get the invoice ID
+        
+        # Save modified items to InvoiceItem table
+        if modified_items:
+            for item in modified_items:
+                product = Product.query.get(item.get('product_id'))
+                invoice_item = InvoiceItem(
+                    invoice_id=invoice.id,
+                    product_id=item.get('product_id'),
+                    product_name=item.get('product_name', product.name if product else 'Produit'),
+                    quantity=item.get('quantity', 1),
+                    days=item.get('days', 1),
+                    unit_price=item.get('unit_price', 0),
+                    factor=item.get('factor', 1),
+                    total_price=item.get('total_price', 0)
+                )
+                db.session.add(invoice_item)
+        
         db.session.commit()
         
         return jsonify({
