@@ -1664,6 +1664,44 @@ def get_invoices():
         'created_by': inv.created_by
     } for inv in invoices])
 
+@app.route('/api/invoices/<int:invoice_id>', methods=['GET'])
+@jwt_required()
+def get_invoice(invoice_id):
+    try:
+        invoice = Invoice.query.get_or_404(invoice_id)
+        return jsonify({
+            'id': invoice.id,
+            'invoice_number': invoice.invoice_number,
+            'stand_id': invoice.stand_id,
+            'stand_name': invoice.stand.name if invoice.stand else None,
+            'client_id': invoice.client_id,
+            'client_name': invoice.client_name,
+            'client_email': invoice.client_email,
+            'client_phone': invoice.client_phone,
+            'client_address': invoice.client_address,
+            'client_company': invoice.client_company,
+            'total_ht': invoice.total_ht,
+            'tva_amount': invoice.tva_amount,
+            'total_ttc': invoice.total_ttc,
+            'advance_payment': invoice.advance_payment if hasattr(invoice, 'advance_payment') else 0,
+            'remise': invoice.remise if hasattr(invoice, 'remise') else 0,
+            'remise_type': invoice.remise_type if hasattr(invoice, 'remise_type') else 'percentage',
+            'tva_percentage': invoice.tva_percentage if hasattr(invoice, 'tva_percentage') else 19,
+            'product_factor': invoice.product_factor if hasattr(invoice, 'product_factor') else 1,
+            'status': invoice.status,
+            'agent_name': invoice.agent_name,
+            'company_name': invoice.company_name,
+            'company_address': invoice.company_address,
+            'company_phone': invoice.company_phone,
+            'company_email': invoice.company_email,
+            'created_at': invoice.created_at.isoformat(),
+            'approved_at': invoice.approved_at.isoformat() if invoice.approved_at else None,
+            'created_by': invoice.created_by
+        }), 200
+    except Exception as e:
+        print(f"Error getting invoice: {str(e)}")
+        return jsonify({'message': f'Error getting invoice: {str(e)}'}), 500
+
 @app.route('/api/invoices', methods=['POST'])
 @jwt_required()
 def create_invoice():
@@ -2149,21 +2187,36 @@ def generate_invoice_pdf(invoice_id):
         ]
     ]
     
-    # Add stand items
-    for item in stand.items:
-        product_name = item.product.name if item.product else 'Produit inconnu'
-        pricing_type = item.product.pricing_type if item.product else 'Par Événement'
-        
-        description = product_name
-        if pricing_type == 'Par Jour' and item.days > 1:
-            description += f" ({item.days} jours)"
-        
-        items_data.append([
-            Paragraph(description, styles['Normal']),
-            Paragraph(str(item.quantity), styles['Normal']),
-            Paragraph(f'{item.unit_price:.2f} TND', styles['Normal']),
-            Paragraph(f'<b>{item.total_price:.2f} TND</b>', styles['Normal'])
-        ])
+    # Get items from stand or invoice items (for direct invoices)
+    if stand and stand.items:
+        # Stand-based invoice
+        for item in stand.items:
+            product_name = item.product.name if item.product else 'Produit inconnu'
+            pricing_type = item.product.pricing_type if item.product else 'Par Événement'
+            
+            description = product_name
+            if pricing_type == 'Par Jour' and item.days > 1:
+                description += f" ({item.days} jours)"
+            
+            items_data.append([
+                Paragraph(description, styles['Normal']),
+                Paragraph(str(item.quantity), styles['Normal']),
+                Paragraph(f'{item.unit_price:.2f} TND', styles['Normal']),
+                Paragraph(f'<b>{item.total_price:.2f} TND</b>', styles['Normal'])
+            ])
+    else:
+        # Direct invoice (devis) - use InvoiceItem
+        for item in invoice.items:
+            description = item.product_name
+            if item.days > 1:
+                description += f" ({item.days} jours)"
+            
+            items_data.append([
+                Paragraph(description, styles['Normal']),
+                Paragraph(str(item.quantity), styles['Normal']),
+                Paragraph(f'{item.unit_price:.2f} TND', styles['Normal']),
+                Paragraph(f'<b>{item.total_price:.2f} TND</b>', styles['Normal'])
+            ])
     
     # Add totals
     items_data.extend([
@@ -2252,13 +2305,15 @@ def download_invoice_pdf(invoice_id):
     try:
         invoice = Invoice.query.get_or_404(invoice_id)
         
-        # Verify stand exists
-        if not invoice.stand:
-            return jsonify({'error': 'Invoice stand not found'}), 400
-        
-        # Verify stand has items
-        if not invoice.stand.items:
-            return jsonify({'error': 'Stand has no items'}), 400
+        # Verify invoice has items (either from stand or direct invoice items)
+        has_items = False
+        if invoice.stand_id and invoice.stand and invoice.stand.items:
+            has_items = True
+        elif invoice.items:  # Check InvoiceItem table for direct invoices
+            has_items = True
+            
+        if not has_items:
+            return jsonify({'error': 'Invoice has no items'}), 400
             
         pdf_buffer = generate_invoice_pdf(invoice_id)
         
