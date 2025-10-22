@@ -220,6 +220,8 @@ class Invoice(db.Model):
     product_factor = db.Column(db.Float, default=1)  # Price multiplier: 1 or 1.5
     # Currency
     currency = db.Column(db.String(10), default='TND')  # Currency code (TND, EUR, USD, etc.)
+    # Timbre fiscale (fiscal stamp)
+    timbre_fiscale = db.Column(db.Float, default=0)  # Fiscal stamp amount
     # Payment tracking
     advance_payment = db.Column(db.Float, default=0)  # Amount paid upfront when signing
     # Status: 'devis' (initial quote), 'facture' (approved/signed), 'paid', 'cancelled'
@@ -1661,6 +1663,7 @@ def get_invoices():
         'tva_percentage': inv.tva_percentage if hasattr(inv, 'tva_percentage') else 19,
         'product_factor': inv.product_factor if hasattr(inv, 'product_factor') else 1,
         'currency': inv.currency if hasattr(inv, 'currency') else 'TND',  # Add currency
+        'timbre_fiscale': inv.timbre_fiscale if hasattr(inv, 'timbre_fiscale') else 0,  # Add timbre fiscale
         'status': inv.status,
         'agent_name': inv.agent_name,
         'company_name': inv.company_name,
@@ -1697,6 +1700,7 @@ def get_invoice(invoice_id):
             'tva_percentage': invoice.tva_percentage if hasattr(invoice, 'tva_percentage') else 19,
             'product_factor': invoice.product_factor if hasattr(invoice, 'product_factor') else 1,
             'currency': invoice.currency if hasattr(invoice, 'currency') else 'TND',  # Add currency
+            'timbre_fiscale': invoice.timbre_fiscale if hasattr(invoice, 'timbre_fiscale') else 0,  # Add timbre fiscale
             'status': invoice.status,
             'agent_name': invoice.agent_name,
             'company_name': invoice.company_name,
@@ -1798,7 +1802,12 @@ def create_invoice():
     
     # Calculate TVA with custom percentage
     tva_amount = total_ht * (tva_percentage / 100)
-    total_ttc = total_ht + tva_amount
+    
+    # Add timbre fiscale
+    timbre_fiscale = float(data.get('timbre_fiscale', 0))
+    
+    # Calculate total TTC (including timbre fiscale)
+    total_ttc = total_ht + tva_amount + timbre_fiscale
     
     # Use provided client info from form, fallback to defaults
     invoice = Invoice(
@@ -1818,6 +1827,7 @@ def create_invoice():
         tva_percentage=tva_percentage,
         product_factor=data.get('product_factor', 1),  # Keep for backward compatibility
         currency=data.get('currency', stand.currency if stand else 'TND'),  # Use stand currency or provided currency
+        timbre_fiscale=timbre_fiscale,  # Add timbre fiscale
         status='devis',  # Start as devis
         agent_name=current_user.name,
         company_name=data.get('company_name', 'Votre Entreprise'),
@@ -2235,6 +2245,7 @@ def generate_invoice_pdf(invoice_id):
     items_data.extend([
         ['', '', Paragraph('<b>TOTAL HT:</b>', styles['Normal']), Paragraph(f'<b>{invoice.total_ht:.2f} {currency}</b>', styles['Normal'])],
         ['', '', Paragraph('<b>TVA (19%):</b>', styles['Normal']), Paragraph(f'<b>{invoice.tva_amount:.2f} {currency}</b>', styles['Normal'])],
+        ['', '', Paragraph('<b>Timbre Fiscale:</b>', styles['Normal']), Paragraph(f'<b>{invoice.timbre_fiscale:.2f} {currency}</b>', styles['Normal'])],
         ['', '', Paragraph('<b>TOTAL TTC:</b>', styles['Normal']), Paragraph(f'<b>{invoice.total_ttc:.2f} {currency}</b>', styles['Normal'])],
     ])
     
