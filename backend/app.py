@@ -1173,6 +1173,41 @@ def create_stand():
         'purchases_created': created_purchases
     }), 201
 
+@app.route('/api/stands/<int:stand_id>', methods=['PUT'])
+@jwt_required()
+def update_stand(stand_id):
+    try:
+        current_user_id = int(get_jwt_identity())
+        stand = Stand.query.get_or_404(stand_id)
+        
+        # Check if user is the creator or has permission
+        current_user = User.query.get(current_user_id)
+        user_role = get_mapped_role(current_user.role)
+        
+        if stand.created_by != current_user_id and user_role not in ['Commercial', 'Propriétaire']:
+            return jsonify({'message': 'Unauthorized'}), 403
+        
+        data = request.get_json()
+        
+        # Update basic stand information
+        if 'name' in data:
+            stand.name = data['name']
+        if 'description' in data:
+            stand.description = data['description']
+        if 'client_id' in data:
+            stand.client_id = data['client_id']
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Stand updated successfully',
+            'stand_id': stand.id
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating stand: {str(e)}")
+        return jsonify({'message': f'Error updating stand: {str(e)}'}), 500
+
 @app.route('/api/stands/<int:stand_id>/validate-logistics', methods=['POST'])
 @jwt_required()
 def validate_logistics(stand_id):

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -14,7 +15,8 @@ import {
   User,
   DollarSign,
   Package,
-  Trash2
+  Trash2,
+  Edit2
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import * as XLSX from 'xlsx'
@@ -25,6 +27,13 @@ export default function StandCatalog() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStand, setSelectedStand] = useState(null)
   const [showDetailsDialog, setShowDetailsDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [editingStand, setEditingStand] = useState(null)
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    client_id: '',
+    description: ''
+  })
 
   useEffect(() => {
     loadStands()
@@ -109,6 +118,38 @@ export default function StandCatalog() {
       setStands(updatedStands)
       localStorage.setItem('savedStands', JSON.stringify(updatedStands))
       toast.success('Stand supprimé avec succès')
+    }
+  }
+
+  const handleEdit = (stand) => {
+    setEditingStand(stand)
+    setEditFormData({
+      name: stand.name || '',
+      client_id: stand.client_id || '',
+      description: stand.description || ''
+    })
+    setShowEditDialog(true)
+  }
+
+  const handleUpdateStand = async () => {
+    if (!editFormData.name.trim()) {
+      toast.error('Veuillez saisir un nom pour le stand')
+      return
+    }
+
+    try {
+      await apiService.updateStand(editingStand.id, {
+        name: editFormData.name,
+        description: editFormData.description
+      })
+      
+      toast.success('Stand modifié avec succès!')
+      setShowEditDialog(false)
+      setEditingStand(null)
+      loadStands() // Reload stands to get updated data
+    } catch (error) {
+      console.error('Error updating stand:', error)
+      toast.error('Erreur lors de la modification')
     }
   }
 
@@ -206,14 +247,25 @@ export default function StandCatalog() {
                   <Download className="h-3 w-3" />
                 </Button>
                 {canEdit && stand.creator === user.name && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => deleteStand(stand.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(stand)}
+                      title="Modifier"
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteStand(stand.id)}
+                      className="text-red-600 hover:text-red-700"
+                      title="Supprimer"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </>
                 )}
               </div>
             </CardContent>
@@ -373,6 +425,58 @@ export default function StandCatalog() {
           </Card>
         </div>
       )}
+
+      {/* Edit Stand Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modifier le Stand</DialogTitle>
+            <DialogDescription>
+              Modifiez les informations du stand
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Nom du Stand *</Label>
+              <Input
+                id="edit-name"
+                value={editFormData.name}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Ex: Stand Audiovisuel"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Input
+                id="edit-description"
+                value={editFormData.description}
+                onChange={(e) => setEditFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Description du stand"
+              />
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              Note: Pour modifier les produits du stand, veuillez créer un nouveau stand.
+            </p>
+            
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowEditDialog(false)}
+              >
+                Annuler
+              </Button>
+              <Button onClick={handleUpdateStand}>
+                Enregistrer
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
