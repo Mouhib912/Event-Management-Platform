@@ -520,7 +520,9 @@ def create_contact():
             contact.code_douane = data.get('code_douane')
             contact.registre_commerce = data.get('registre_commerce')
             contact.legal_form = data.get('legal_form')
-            contact.capital = data.get('capital')
+            # Convert empty string to None for numeric field
+            capital_value = data.get('capital')
+            contact.capital = float(capital_value) if capital_value and capital_value != '' else None
             contact.website = data.get('website')
         
         # Add person-specific fields
@@ -580,7 +582,10 @@ def update_contact(contact_id):
             contact.code_douane = data.get('code_douane', contact.code_douane)
             contact.registre_commerce = data.get('registre_commerce', contact.registre_commerce)
             contact.legal_form = data.get('legal_form', contact.legal_form)
-            contact.capital = data.get('capital', contact.capital)
+            # Convert empty string to None for numeric field
+            if 'capital' in data:
+                capital_value = data.get('capital')
+                contact.capital = float(capital_value) if capital_value and capital_value != '' else None
             contact.website = data.get('website', contact.website)
         
         # Update person-specific fields
