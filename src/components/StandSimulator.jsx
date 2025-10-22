@@ -14,6 +14,7 @@ export default function StandSimulator() {
   const [standName, setStandName] = useState('')
   const [clientId, setClientId] = useState('')
   const [clientSearch, setClientSearch] = useState('')
+  const [currency, setCurrency] = useState('TND')
   const [clients, setClients] = useState([])
   const [products, setProducts] = useState([])
   const [categories, setCategories] = useState([])
@@ -181,6 +182,7 @@ export default function StandSimulator() {
         client_id: parseInt(clientId),
         description: `Stand avec ${selectedProducts.length} produit(s)`,
         total_amount: calculateTotal(),
+        currency: currency,
         items: selectedProducts.map(product => ({
           product_id: product.id,
           quantity: product.quantity,
@@ -196,6 +198,7 @@ export default function StandSimulator() {
       // Reset form
       setStandName('')
       setClientId('')
+      setCurrency('TND')
       setSelectedProducts([])
     } catch (error) {
       console.error('Error saving stand:', error)
@@ -450,6 +453,21 @@ export default function StandSimulator() {
               </div>
 
               <div>
+                <Label htmlFor="currency">Devise *</Label>
+                <Select value={currency} onValueChange={setCurrency}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une devise" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TND">TND - Dinar Tunisien</SelectItem>
+                    <SelectItem value="EUR">EUR - Euro</SelectItem>
+                    <SelectItem value="USD">USD - Dollar Américain</SelectItem>
+                    <SelectItem value="GBP">GBP - Livre Sterling</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <Label htmlFor="client">Client *</Label>
                 <div className="space-y-2">
                   <div className="relative">
@@ -617,7 +635,7 @@ export default function StandSimulator() {
                   <div className="border-t pt-4">
                     <div className="flex items-center justify-between text-lg font-bold">
                       <span>Total:</span>
-                      <span className="text-blue-600">{calculateTotal().toFixed(2)} TND</span>
+                      <span className="text-blue-600">{calculateTotal().toFixed(2)} {currency}</span>
                     </div>
                   </div>
 

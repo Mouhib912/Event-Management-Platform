@@ -42,6 +42,7 @@ const Invoices = () => {
     company_address: '',
     company_phone: '',
     company_email: '',
+    currency: 'TND',
     remise: 0,
     remise_type: 'percentage',
     tva_percentage: 19,
@@ -1049,6 +1050,22 @@ const Invoices = () => {
                       placeholder="19"
                     />
                   </div>
+
+                  {/* Currency Selector */}
+                  <div>
+                    <Label htmlFor="currency">Devise</Label>
+                    <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner une devise" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="TND">TND - Dinar Tunisien</SelectItem>
+                        <SelectItem value="EUR">EUR - Euro</SelectItem>
+                        <SelectItem value="USD">USD - Dollar Américain</SelectItem>
+                        <SelectItem value="GBP">GBP - Livre Sterling</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
               </div>
@@ -1093,13 +1110,13 @@ const Invoices = () => {
                   <Separator className="my-2" />
                   <div className="flex justify-between">
                     <span className="text-sm font-medium">Total TTC:</span>
-                    <span className="text-sm font-bold text-blue-600">{selectedInvoiceForSigning.total_ttc.toFixed(2)} TND</span>
+                    <span className="text-sm font-bold text-blue-600">{selectedInvoiceForSigning.total_ttc.toFixed(2)} {selectedInvoiceForSigning.currency || 'TND'}</span>
                   </div>
                 </div>
               )}
 
               <div>
-                <Label htmlFor="advance_payment">Montant de l'Acompte (TND)</Label>
+                <Label htmlFor="advance_payment">Montant de l'Acompte ({selectedInvoiceForSigning?.currency || 'TND'})</Label>
                 <div className="relative mt-1">
                   <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
@@ -1126,13 +1143,13 @@ const Invoices = () => {
                     <div className="space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">💰 Acompte Payé:</span>
-                        <span className="text-lg font-bold text-green-600">{advancePayment.toFixed(2)} TND</span>
+                        <span className="text-lg font-bold text-green-600">{advancePayment.toFixed(2)} {selectedInvoiceForSigning.currency || 'TND'}</span>
                       </div>
                       <Separator />
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">⏳ Reste à Payer:</span>
                         <span className="text-lg font-bold text-orange-600">
-                          {(selectedInvoiceForSigning.total_ttc - advancePayment).toFixed(2)} TND
+                          {(selectedInvoiceForSigning.total_ttc - advancePayment).toFixed(2)} {selectedInvoiceForSigning.currency || 'TND'}
                         </span>
                       </div>
                     </div>
@@ -1239,13 +1256,13 @@ const Invoices = () => {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>{invoice.total_ht.toFixed(2)} TND</TableCell>
-                    <TableCell>{invoice.tva_amount.toFixed(2)} TND</TableCell>
-                    <TableCell className="font-bold">{invoice.total_ttc.toFixed(2)} TND</TableCell>
+                    <TableCell>{invoice.total_ht.toFixed(2)} {invoice.currency || 'TND'}</TableCell>
+                    <TableCell>{invoice.tva_amount.toFixed(2)} {invoice.currency || 'TND'}</TableCell>
+                    <TableCell className="font-bold">{invoice.total_ttc.toFixed(2)} {invoice.currency || 'TND'}</TableCell>
                     <TableCell>
                       <div className="text-sm">
                         <div className="font-medium text-green-600">
-                          {(invoice.advance_payment || 0).toFixed(2)} TND
+                          {(invoice.advance_payment || 0).toFixed(2)} {invoice.currency || 'TND'}
                         </div>
                         {invoice.status === 'paid' && (
                           <div className="text-xs text-gray-500">Soldé</div>
@@ -1255,10 +1272,10 @@ const Invoices = () => {
                     <TableCell>
                       <div className="text-sm">
                         {invoice.status === 'paid' ? (
-                          <div className="font-medium text-gray-400">0.00 TND</div>
+                          <div className="font-medium text-gray-400">0.00 {invoice.currency || 'TND'}</div>
                         ) : (
                           <div className="font-medium text-orange-600">
-                            {(invoice.total_ttc - (invoice.advance_payment || 0)).toFixed(2)} TND
+                            {(invoice.total_ttc - (invoice.advance_payment || 0)).toFixed(2)} {invoice.currency || 'TND'}
                           </div>
                         )}
                       </div>
